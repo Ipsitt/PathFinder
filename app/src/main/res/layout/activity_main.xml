@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:gravity="center"
+    android:padding="24dp"
+    android:background="#1E3A8A">
+
+    <!-- App Title -->
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="PathFinder"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="40dp" />
+
+    <!-- Sign in as Organization -->
+    <Button
+        android:id="@+id/btnOrganization"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sign in as Organization"
+        android:layout_marginBottom="16dp"
+        android:padding="12dp"
+        android:backgroundTint="#2563EB"
+        android:textColor="#FFFFFF" />
+
+    <!-- Sign in as Student -->
+    <Button
+        android:id="@+id/btnStudent"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sign in as Student"
+        android:padding="12dp"
+        android:backgroundTint="#3B82F6"
+        android:textColor="#FFFFFF" />
+
+</LinearLayout>

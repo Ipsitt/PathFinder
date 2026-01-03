@@ -17,6 +17,8 @@
         <activity android:name=".OrganizationLoginActivity" />
         <activity android:name=".StudentRegisterActivity"/>
         <activity android:name=".OrganizationRegisterActivity"/>
+        <activity android:name=".StudentHomeActivity" />
+
 
 
 

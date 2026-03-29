@@ -37,6 +37,15 @@ public class StudentRegisterActivity extends AppCompatActivity {
                 }
 
                 DB db = new DB(StudentRegisterActivity.this);
+
+                // 🔍 Check duplicate email
+                if (db.emailExists(email)) {
+                    Toast.makeText(StudentRegisterActivity.this,
+                            "Email already registered",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 boolean success = db.insertUser(email, password);
 
                 if (success) {

@@ -13,7 +13,12 @@ public class DB extends SQLiteOpenHelper {
     public static final String DATABASE_NAME = "Mydatabase.db";
     public static final int DATABASE_VERSION = 1;
 
-    public static final String TABLE_NAME = "users";
+    // Student table
+    public static final String STUDENT_TABLE = "students";
+
+    // Organization table
+    public static final String ORG_TABLE = "organizations";
+
     public static final String COL_EMAIL = "email";
     public static final String COL_PASSWORD = "password";
 
@@ -23,33 +28,26 @@ public class DB extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        String createTableQuery =
-                "CREATE TABLE " + TABLE_NAME + " (" +
-                        COL_EMAIL + " TEXT PRIMARY KEY, " +
-                        COL_PASSWORD + " TEXT" +
-                        ")";
-        db.execSQL(createTableQuery);
+
+        // Student table
+        db.execSQL("CREATE TABLE " + STUDENT_TABLE + " (" +
+                COL_EMAIL + " TEXT PRIMARY KEY, " +
+                COL_PASSWORD + " TEXT)");
+
+        // Organization table
+        db.execSQL("CREATE TABLE " + ORG_TABLE + " (" +
+                COL_EMAIL + " TEXT PRIMARY KEY, " +
+                COL_PASSWORD + " TEXT)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        db.execSQL("DROP TABLE IF EXISTS " + TABLE_NAME);
+        db.execSQL("DROP TABLE IF EXISTS " + STUDENT_TABLE);
+        db.execSQL("DROP TABLE IF EXISTS " + ORG_TABLE);
         onCreate(db);
     }
 
-    // 🔍 Check if email exists
-    public boolean emailExists(String email) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        Cursor cursor = db.rawQuery(
-                "SELECT * FROM " + TABLE_NAME + " WHERE " + COL_EMAIL + "=?",
-                new String[]{email}
-        );
-        boolean exists = cursor.getCount() > 0;
-        cursor.close();
-        return exists;
-    }
-
-    // 🔐 Hash password (SHA-256)
+    // 🔐 Hash password
     public String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -67,28 +65,83 @@ public class DB extends SQLiteOpenHelper {
         }
     }
 
-    // ➕ Insert user
-    public boolean insertUser(String email, String password) {
+    // =========================
+    // STUDENT METHODS
+    // =========================
+
+    public boolean insertStudent(String email, String password) {
         SQLiteDatabase db = this.getWritableDatabase();
 
         ContentValues values = new ContentValues();
         values.put(COL_EMAIL, email);
         values.put(COL_PASSWORD, hashPassword(password));
 
-        long result = db.insert(TABLE_NAME, null, values);
+        long result = db.insert(STUDENT_TABLE, null, values);
         return result != -1;
     }
 
-    // 🔐 Check login
-    public boolean checkUser(String email, String password) {
+    public boolean checkStudent(String email, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
 
-        String hashedPassword = hashPassword(password);
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM " + STUDENT_TABLE +
+                        " WHERE email=? AND password=?",
+                new String[]{email, hashPassword(password)}
+        );
+
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
+
+    public boolean studentExists(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
 
         Cursor cursor = db.rawQuery(
-                "SELECT * FROM " + TABLE_NAME +
-                        " WHERE " + COL_EMAIL + "=? AND " + COL_PASSWORD + "=?",
-                new String[]{email, hashedPassword}
+                "SELECT * FROM " + STUDENT_TABLE + " WHERE email=?",
+                new String[]{email}
+        );
+
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
+
+    // =========================
+    // ORGANIZATION METHODS
+    // =========================
+
+    public boolean insertOrg(String email, String password) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        ContentValues values = new ContentValues();
+        values.put(COL_EMAIL, email);
+        values.put(COL_PASSWORD, hashPassword(password));
+
+        long result = db.insert(ORG_TABLE, null, values);
+        return result != -1;
+    }
+
+    public boolean checkOrg(String email, String password) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM " + ORG_TABLE +
+                        " WHERE email=? AND password=?",
+                new String[]{email, hashPassword(password)}
+        );
+
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
+    }
+
+    public boolean orgExists(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM " + ORG_TABLE + " WHERE email=?",
+                new String[]{email}
         );
 
         boolean exists = cursor.getCount() > 0;

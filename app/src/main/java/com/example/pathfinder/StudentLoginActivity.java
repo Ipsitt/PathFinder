@@ -15,6 +15,7 @@ public class StudentLoginActivity extends AppCompatActivity {
     EditText etStudentEmail, etStudentPassword;
     Button btnStudentLogin;
     TextView tvStudentRegister;
+    DBHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -26,36 +27,32 @@ public class StudentLoginActivity extends AppCompatActivity {
         btnStudentLogin = findViewById(R.id.btnStudentLogin);
         tvStudentRegister = findViewById(R.id.tvStudentRegister);
 
+        dbHelper = new DBHelper(this);
+
         btnStudentLogin.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-
                 String email = etStudentEmail.getText().toString().trim();
                 String password = etStudentPassword.getText().toString().trim();
 
                 if (email.isEmpty() || password.isEmpty()) {
                     Toast.makeText(StudentLoginActivity.this,
-                            "Please fill all fields",
-                            Toast.LENGTH_SHORT).show();
+                            "Please fill all fields", Toast.LENGTH_SHORT).show();
                     return;
                 }
 
-                DB db = new DB(StudentLoginActivity.this);
-
-                boolean valid = db.checkUser(email, password);
+                boolean valid = dbHelper.checkStudentLogin(email, password);
 
                 if (valid) {
                     Toast.makeText(StudentLoginActivity.this,
-                            "Login successful",
-                            Toast.LENGTH_SHORT).show();
-
+                            "Login successful", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(StudentLoginActivity.this, StudentHomeActivity.class);
+                    intent.putExtra("email", email);
                     startActivity(intent);
-
+                    finish();
                 } else {
                     Toast.makeText(StudentLoginActivity.this,
-                            "Invalid email or password",
-                            Toast.LENGTH_SHORT).show();
+                            "Invalid email or password", Toast.LENGTH_SHORT).show();
                 }
             }
         });

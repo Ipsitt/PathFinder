@@ -2,44 +2,55 @@ package com.example.pathfinder;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 public class OrganizationLoginActivity extends AppCompatActivity {
 
-    EditText etOrgEmail, etOrgPassword;
-    Button btnOrgLogin;
-    TextView tvOrgRegister; // Register link
+    EditText etEmail, etPassword;
+    Button btnLogin;
+    TextView tvOrgRegister;
+    DBHelper dbHelper;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_organization_login);
 
-        // Initialize views
-        etOrgEmail = findViewById(R.id.etOrgEmail);
-        etOrgPassword = findViewById(R.id.etOrgPassword);
-        btnOrgLogin = findViewById(R.id.btnOrgLogin);
+        etEmail = findViewById(R.id.etOrgEmail);
+        etPassword = findViewById(R.id.etOrgPassword);
+        btnLogin = findViewById(R.id.btnOrgLogin);
         tvOrgRegister = findViewById(R.id.tvOrgRegister);
 
-        // Login button click (dummy for now)
-        btnOrgLogin.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) { }
+        dbHelper = new DBHelper(this);
+
+        btnLogin.setOnClickListener(v -> {
+            String email = etEmail.getText().toString().trim();
+            String password = etPassword.getText().toString().trim();
+
+            if (email.isEmpty() || password.isEmpty()) {
+                Toast.makeText(this, "Enter email and password", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
+            if (dbHelper.checkOrgLogin(email, password)) {
+                Intent intent = new Intent(OrganizationLoginActivity.this, OrganizationHomeActivity.class);
+                intent.putExtra("email", email);
+                startActivity(intent);
+                finish();
+            } else {
+                Toast.makeText(this, "Invalid credentials", Toast.LENGTH_SHORT).show();
+            }
         });
 
-        // Register link click
-        tvOrgRegister.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Open Organization Registration screen
-                Intent intent = new Intent(OrganizationLoginActivity.this, OrganizationRegisterActivity.class);
-                startActivity(intent);
-            }
+        // Navigate to register screen
+        tvOrgRegister.setOnClickListener(v -> {
+            Intent intent = new Intent(OrganizationLoginActivity.this, OrganizationRegisterActivity.class);
+            startActivity(intent);
         });
     }
 }

@@ -25,7 +25,7 @@ public class DB extends SQLiteOpenHelper {
     public void onCreate(SQLiteDatabase db) {
         String createTableQuery =
                 "CREATE TABLE " + TABLE_NAME + " (" +
-                        COL_EMAIL + " TEXT PRIMARY KEY, " +   // 👈 prevents duplicates
+                        COL_EMAIL + " TEXT PRIMARY KEY, " +
                         COL_PASSWORD + " TEXT" +
                         ")";
         db.execSQL(createTableQuery);
@@ -67,7 +67,7 @@ public class DB extends SQLiteOpenHelper {
         }
     }
 
-    // ➕ Insert user with hashed password
+    // ➕ Insert user
     public boolean insertUser(String email, String password) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -77,5 +77,22 @@ public class DB extends SQLiteOpenHelper {
 
         long result = db.insert(TABLE_NAME, null, values);
         return result != -1;
+    }
+
+    // 🔐 Check login
+    public boolean checkUser(String email, String password) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        String hashedPassword = hashPassword(password);
+
+        Cursor cursor = db.rawQuery(
+                "SELECT * FROM " + TABLE_NAME +
+                        " WHERE " + COL_EMAIL + "=? AND " + COL_PASSWORD + "=?",
+                new String[]{email, hashedPassword}
+        );
+
+        boolean exists = cursor.getCount() > 0;
+        cursor.close();
+        return exists;
     }
 }

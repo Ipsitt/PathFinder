@@ -33,9 +33,25 @@ public class StudentLoginActivity extends AppCompatActivity {
                 String email = etStudentEmail.getText().toString().trim();
                 String password = etStudentPassword.getText().toString().trim();
 
-                if (email.equals("empty") && password.equals("empty")) {
+                if (email.isEmpty() || password.isEmpty()) {
+                    Toast.makeText(StudentLoginActivity.this,
+                            "Please fill all fields",
+                            Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                DB db = new DB(StudentLoginActivity.this);
+
+                boolean valid = db.checkUser(email, password);
+
+                if (valid) {
+                    Toast.makeText(StudentLoginActivity.this,
+                            "Login successful",
+                            Toast.LENGTH_SHORT).show();
+
                     Intent intent = new Intent(StudentLoginActivity.this, StudentHomeActivity.class);
                     startActivity(intent);
+
                 } else {
                     Toast.makeText(StudentLoginActivity.this,
                             "Invalid email or password",

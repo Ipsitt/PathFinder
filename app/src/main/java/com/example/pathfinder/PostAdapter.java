@@ -5,6 +5,8 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -13,10 +15,11 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
-import androidx.cardview.widget.CardView;
 import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder> {
 
@@ -27,6 +30,10 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
     private final Context context;
     private List<Post> posts;
     private final OnPostClickListener listener;
+
+    // Single background thread for all image decodes — avoids flooding the thread pool
+    private final ExecutorService imageExecutor = Executors.newSingleThreadExecutor();
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     public PostAdapter(Context context, List<Post> posts, OnPostClickListener listener) {
         this.context  = context;
@@ -52,21 +59,43 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
         holder.tvTitle.setText(post.title);
         holder.tvOrgName.setText(post.orgName);
-        holder.tvStipend.setText(post.stipend != null && !post.stipend.isEmpty()
-                ? post.stipend : "Unpaid");
-        holder.tvDuration.setText(post.timePeriod != null && !post.timePeriod.isEmpty()
-                ? post.timePeriod : "Duration TBD");
+        holder.tvStipend.setText(
+                post.stipend != null && !post.stipend.isEmpty() ? post.stipend : "Unpaid");
+        holder.tvDuration.setText(
+                post.timePeriod != null && !post.timePeriod.isEmpty() ? post.timePeriod : "Duration TBD");
         holder.tvDescription.setText(post.description);
 
-        // Org photo — show from BLOB or fallback placeholder
+        // ── Async image loading ──────────────────────────────────────────
+        // Tag the view with the post id so we can detect if the ViewHolder
+        // was recycled before the decode finishes (avoids image flickering).
+        holder.imgOrgPhoto.setTag(post.id);
+
         if (post.orgImage != null && post.orgImage.length > 0) {
-            Bitmap bmp = BitmapFactory.decodeByteArray(post.orgImage, 0, post.orgImage.length);
-            holder.imgOrgPhoto.setImageBitmap(bmp);
-        } else {
+            // Clear any previous image immediately so the placeholder shows
+            // while we decode the new one in the background.
             holder.imgOrgPhoto.setImageResource(android.R.drawable.ic_menu_gallery);
+
+            final byte[] imageBytes = post.orgImage;
+            final int postId = post.id;
+
+            imageExecutor.execute(() -> {
+                // Decode off the main thread
+                Bitmap bmp = BitmapFactory.decodeByteArray(imageBytes, 0, imageBytes.length);
+
+                mainHandler.post(() -> {
+                    // Only apply if this ViewHolder still belongs to the same post
+                    if (bmp != null && holder.imgOrgPhoto.getTag() != null
+                            && (int) holder.imgOrgPhoto.getTag() == postId) {
+                        holder.imgOrgPhoto.setImageBitmap(bmp);
+                    }
+                });
+            });
+        } else {
+            // No image saved — show a building/gallery placeholder
+            holder.imgOrgPhoto.setImageResource(android.R.drawable.ic_menu_agenda);
         }
 
-        // Build tag chips
+        // ── Tag chips ────────────────────────────────────────────────────
         holder.tagChipsContainer.removeAllViews();
         if (post.tags != null) {
             for (DBHelper.Tag tag : post.tags) {
@@ -92,42 +121,39 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 LinearLayout.LayoutParams.WRAP_CONTENT);
         lp.setMarginEnd(6);
         chip.setLayoutParams(lp);
-
         chip.setText(tag.label);
         chip.setTextSize(11f);
 
-        // Parse the tag color for background; pick white or dark text for contrast
         int bgColor;
         try {
             bgColor = Color.parseColor(tag.color);
         } catch (Exception e) {
             bgColor = Color.parseColor("#94A3B8");
         }
+
         chip.setTextColor(isColorDark(bgColor) ? Color.WHITE : Color.parseColor("#1E293B"));
 
-        // Rounded pill background using the tag color
         GradientDrawable gd = new GradientDrawable();
         gd.setShape(GradientDrawable.RECTANGLE);
-        gd.setCornerRadius(32f);
+        gd.setCornerRadius(99f);
         gd.setColor(bgColor);
         chip.setBackground(gd);
 
-        int ph = dpToPx(6);
-        int pv = dpToPx(3);
+        int ph = dp(8);
+        int pv = dp(3);
         chip.setPadding(ph, pv, ph, pv);
 
         return chip;
     }
 
-    /** Returns true if the color is dark enough to warrant white text */
     private boolean isColorDark(int color) {
-        double luminance = (0.299 * Color.red(color)
+        double lum = (0.299 * Color.red(color)
                 + 0.587 * Color.green(color)
                 + 0.114 * Color.blue(color)) / 255;
-        return luminance < 0.55;
+        return lum < 0.55;
     }
 
-    private int dpToPx(int dp) {
+    private int dp(int dp) {
         return Math.round(dp * context.getResources().getDisplayMetrics().density);
     }
 

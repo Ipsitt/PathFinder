@@ -28,13 +28,25 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Tags:"
-            android:layout_marginTop="8dp" />
+            android:text="Tags (Max 5):"
+            android:layout_marginTop="8dp"
+            android:textStyle="bold" />
 
         <Spinner
-            android:id="@+id/spTags"
+            android:id="@+id/spTagDropdown"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+            android:layout_height="48dp"
+            android:spinnerMode="dropdown"
+            android:layout_marginTop="4dp"/>
+
+        <TextView
+            android:id="@+id/tvSelectedTags"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Selected Tags: None"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp"
+            android:textColor="#333333" />
 
         <EditText
             android:id="@+id/etStipend"
@@ -55,7 +67,7 @@
             android:id="@+id/btnPost"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Post"
+            android:text="Post Internship"
             android:layout_marginTop="16dp"
             android:backgroundTint="#1E90FF"
             android:textColor="#FFFFFF"/>

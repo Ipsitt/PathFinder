@@ -11,6 +11,10 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class OrganizationLoginActivity extends AppCompatActivity {
 
+    // ── Hardcoded admin credentials ───────────────────────────────────────────
+    private static final String ADMIN_EMAIL    = "admin";
+    private static final String ADMIN_PASSWORD = "admin";
+
     EditText etEmail, etPassword;
     Button btnLogin;
     TextView tvOrgRegister;
@@ -21,15 +25,15 @@ public class OrganizationLoginActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_organization_login);
 
-        etEmail = findViewById(R.id.etOrgEmail);
-        etPassword = findViewById(R.id.etOrgPassword);
-        btnLogin = findViewById(R.id.btnOrgLogin);
+        etEmail      = findViewById(R.id.etOrgEmail);
+        etPassword   = findViewById(R.id.etOrgPassword);
+        btnLogin     = findViewById(R.id.btnOrgLogin);
         tvOrgRegister = findViewById(R.id.tvOrgRegister);
 
         dbHelper = new DBHelper(this);
 
         btnLogin.setOnClickListener(v -> {
-            String email = etEmail.getText().toString().trim();
+            String email    = etEmail.getText().toString().trim();
             String password = etPassword.getText().toString().trim();
 
             if (email.isEmpty() || password.isEmpty()) {
@@ -37,8 +41,17 @@ public class OrganizationLoginActivity extends AppCompatActivity {
                 return;
             }
 
+            // ── Admin check (hardcoded, bypasses DB) ──────────────────────────
+            if (email.equals(ADMIN_EMAIL) && password.equals(ADMIN_PASSWORD)) {
+                Intent intent = new Intent(this, AdminActivity.class);
+                startActivity(intent);
+                finish();
+                return;
+            }
+
+            // ── Normal org login ──────────────────────────────────────────────
             if (dbHelper.checkOrgLogin(email, password)) {
-                Intent intent = new Intent(OrganizationLoginActivity.this, OrganizationHomeActivity.class);
+                Intent intent = new Intent(this, OrganizationHomeActivity.class);
                 intent.putExtra("email", email);
                 startActivity(intent);
                 finish();
@@ -47,10 +60,7 @@ public class OrganizationLoginActivity extends AppCompatActivity {
             }
         });
 
-        // Navigate to register screen
-        tvOrgRegister.setOnClickListener(v -> {
-            Intent intent = new Intent(OrganizationLoginActivity.this, OrganizationRegisterActivity.class);
-            startActivity(intent);
-        });
+        tvOrgRegister.setOnClickListener(v ->
+                startActivity(new Intent(this, OrganizationRegisterActivity.class)));
     }
 }

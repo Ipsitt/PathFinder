@@ -157,7 +157,9 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
+        <!-- POST BUTTON -->
         <LinearLayout
+            android:id="@+id/bottomPostBtn"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
@@ -176,6 +178,7 @@
                 android:textColor="#555555"/>
         </LinearLayout>
 
+        <!-- INTERNS BUTTON -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"
@@ -195,6 +198,7 @@
                 android:textColor="#555555"/>
         </LinearLayout>
 
+        <!-- HISTORY BUTTON -->
         <LinearLayout
             android:layout_width="0dp"
             android:layout_height="match_parent"

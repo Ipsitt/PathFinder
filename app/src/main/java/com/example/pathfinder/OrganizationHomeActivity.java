@@ -11,6 +11,7 @@ import android.provider.MediaStore;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.activity.result.ActivityResultLauncher;
@@ -25,6 +26,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
     ImageView imgOrg;
     EditText etOrgName, etOrgDescription;
     Button btnUpdate;
+    LinearLayout bottomPostBtn;
 
     DBHelper dbHelper;
     String orgEmail;
@@ -72,6 +74,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         etOrgName        = findViewById(R.id.etOrgName);
         etOrgDescription = findViewById(R.id.etOrgDescription);
         btnUpdate        = findViewById(R.id.btnUpdate);
+        bottomPostBtn    = findViewById(R.id.bottomPostBtn);
 
         dbHelper = new DBHelper(this);
 
@@ -84,7 +87,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
 
         loadOrgData();
 
-        // Click image → open system gallery (no permission declaration needed)
+        // Click image → open system gallery
         imgOrg.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK,
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -112,6 +115,12 @@ public class OrganizationHomeActivity extends AppCompatActivity {
                 Toast.makeText(this, "Update failed", Toast.LENGTH_SHORT).show();
             }
         });
+
+        // Bottom Post button click → open PostActivity
+        bottomPostBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(this, PostActivity.class);
+            startActivity(intent);
+        });
     }
 
     private void loadOrgData() {
@@ -134,7 +143,6 @@ public class OrganizationHomeActivity extends AppCompatActivity {
             return ImageDecoder.decodeBitmap(source,
                     (decoder, info, src) -> decoder.setMutableRequired(true));
         } else {
-            // Safe fallback for API < 28 using InputStream (not deprecated)
             try (java.io.InputStream is = getContentResolver().openInputStream(uri)) {
                 return BitmapFactory.decodeStream(is);
             }

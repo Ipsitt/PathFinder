@@ -36,6 +36,7 @@ android {
 dependencies {
     implementation(libs.appcompat)
     implementation(libs.material)
+    implementation("androidx.recyclerview:recyclerview:1.3.2")
     implementation(libs.activity)
     implementation(libs.constraintlayout)
     testImplementation(libs.junit)

@@ -12,7 +12,7 @@ import java.util.List;
 public class DBHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "PathFinder.db";
-    private static final int DB_VERSION = 6; // Set to 6 to force the table refresh
+    private static final int DB_VERSION = 6;
 
     public DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -20,7 +20,6 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // 1. Organizations Table
         db.execSQL("CREATE TABLE organizations(" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "name TEXT," +
@@ -29,20 +28,17 @@ public class DBHelper extends SQLiteOpenHelper {
                 "description TEXT," +
                 "image BLOB)");
 
-        // 2. Students Table
         db.execSQL("CREATE TABLE students(" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "name TEXT," +
                 "email TEXT UNIQUE," +
                 "password TEXT)");
 
-        // 3. Tags Table
         db.execSQL("CREATE TABLE tags(" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "label TEXT UNIQUE," +
                 "color TEXT)");
 
-        // SEEDING: Insert default tags so the dropdown has data
         String[] defaultTags = {"Android", "Java", "Python", "Web Development", "UI/UX", "Data Science"};
         for (String tag : defaultTags) {
             ContentValues cv = new ContentValues();
@@ -51,7 +47,6 @@ public class DBHelper extends SQLiteOpenHelper {
             db.insert("tags", null, cv);
         }
 
-        // 4. Posts Table
         db.execSQL("CREATE TABLE posts(" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "title TEXT," +
@@ -61,7 +56,6 @@ public class DBHelper extends SQLiteOpenHelper {
                 "org_name TEXT," +
                 "org_email TEXT)");
 
-        // 5. Post_Tags Junction Table
         db.execSQL("CREATE TABLE post_tags(" +
                 "post_id INTEGER," +
                 "tag_id INTEGER," +
@@ -72,7 +66,6 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldV, int newV) {
-        // CRITICAL FIX: Drop ALL tables in reverse order of dependencies
         db.execSQL("DROP TABLE IF EXISTS post_tags");
         db.execSQL("DROP TABLE IF EXISTS posts");
         db.execSQL("DROP TABLE IF EXISTS tags");
@@ -81,7 +74,7 @@ public class DBHelper extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    // ── Password hashing ─────────────────────────────────────────
+    // ── Password hashing ──────────────────────────────────────────────────
 
     public String hashPassword(String password) {
         try {
@@ -96,7 +89,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    // ── Organization methods ─────────────────────────────────────
+    // ── Organization methods ──────────────────────────────────────────────
 
     public boolean orgExists(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
@@ -165,7 +158,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.update("organizations", cv, "email=?", new String[]{email}) > 0;
     }
 
-    // ── Student methods ─────────────────────────────────────────
+    // ── Student methods ───────────────────────────────────────────────────
 
     public boolean studentExists(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
@@ -209,11 +202,10 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.delete("students", "email=?", new String[]{email}) > 0;
     }
 
-    // ── Post & Tag Methods ───────────────────────────────────────
+    // ── Post methods ──────────────────────────────────────────────────────
 
     public long insertPost(String title, String description, String stipend, String timePeriod,
                            String orgName, String orgEmail, List<Integer> tagIds) {
-
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("title", title);
@@ -236,15 +228,80 @@ public class DBHelper extends SQLiteOpenHelper {
         return postId;
     }
 
-    public Cursor getAllPosts() {
-        String query = "SELECT p.id, p.title, p.description, p.stipend, p.time_period, " +
-                "p.org_name, p.org_email, GROUP_CONCAT(t.label) AS tags " +
-                "FROM posts p " +
-                "LEFT JOIN post_tags pt ON p.id = pt.post_id " +
-                "LEFT JOIN tags t ON pt.tag_id = t.id " +
-                "GROUP BY p.id ORDER BY p.id DESC";
-        return getReadableDatabase().rawQuery(query, null);
+    /**
+     * Returns all posts as Post objects, each fully loaded with tags + org image.
+     * Pass a non-empty searchQuery to filter by title, org name, description, or tag label.
+     */
+    public List<Post> getPostsWithTags(String searchQuery) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Post> posts = new ArrayList<>();
+
+        String postSql;
+        String[] postArgs;
+
+        if (searchQuery != null && !searchQuery.trim().isEmpty()) {
+            String q = "%" + searchQuery.trim().toLowerCase() + "%";
+            postSql = "SELECT DISTINCT p.id, p.title, p.description, p.stipend, " +
+                    "p.time_period, p.org_name, p.org_email " +
+                    "FROM posts p " +
+                    "LEFT JOIN post_tags pt ON p.id = pt.post_id " +
+                    "LEFT JOIN tags t ON pt.tag_id = t.id " +
+                    "WHERE LOWER(p.title) LIKE ? " +
+                    "   OR LOWER(p.org_name) LIKE ? " +
+                    "   OR LOWER(p.description) LIKE ? " +
+                    "   OR LOWER(t.label) LIKE ? " +
+                    "ORDER BY p.id DESC";
+            postArgs = new String[]{q, q, q, q};
+        } else {
+            postSql = "SELECT id, title, description, stipend, time_period, org_name, org_email " +
+                    "FROM posts ORDER BY id DESC";
+            postArgs = null;
+        }
+
+        Cursor pc = db.rawQuery(postSql, postArgs);
+        while (pc.moveToNext()) {
+            Post post = new Post();
+            post.id          = pc.getInt(0);
+            post.title       = pc.getString(1);
+            post.description = pc.getString(2);
+            post.stipend     = pc.getString(3);
+            post.timePeriod  = pc.getString(4);
+            post.orgName     = pc.getString(5);
+            post.orgEmail    = pc.getString(6);
+            posts.add(post);
+        }
+        pc.close();
+
+        // Attach tags and org image to each post
+        for (Post post : posts) {
+            post.tags = new ArrayList<>();
+            Cursor tc = db.rawQuery(
+                    "SELECT t.id, t.label, t.color FROM tags t " +
+                            "JOIN post_tags pt ON t.id = pt.tag_id " +
+                            "WHERE pt.post_id = ?",
+                    new String[]{String.valueOf(post.id)});
+            while (tc.moveToNext()) {
+                Tag tag = new Tag();
+                tag.id    = tc.getInt(0);
+                tag.label = tc.getString(1);
+                tag.color = tc.getString(2);
+                post.tags.add(tag);
+            }
+            tc.close();
+
+            Cursor ic = db.rawQuery(
+                    "SELECT image FROM organizations WHERE email=?",
+                    new String[]{post.orgEmail});
+            if (ic.moveToFirst()) {
+                post.orgImage = ic.getBlob(0);
+            }
+            ic.close();
+        }
+
+        return posts;
     }
+
+    // ── Tag methods ───────────────────────────────────────────────────────
 
     public List<Tag> getAllTags() {
         List<Tag> list = new ArrayList<>();
@@ -252,7 +309,7 @@ public class DBHelper extends SQLiteOpenHelper {
         Cursor c = db.rawQuery("SELECT id, label, color FROM tags ORDER BY label ASC", null);
         while (c.moveToNext()) {
             Tag t = new Tag();
-            t.id = c.getInt(0);
+            t.id    = c.getInt(0);
             t.label = c.getString(1);
             t.color = c.getString(2);
             list.add(t);
@@ -283,7 +340,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.delete("tags", "id=?", new String[]{String.valueOf(id)}) > 0;
     }
 
-    // ── Data classes ────────────────────────────────────────────
+    // ── Model classes ─────────────────────────────────────────────────────
 
     public static class Org {
         public String name;
@@ -296,7 +353,6 @@ public class DBHelper extends SQLiteOpenHelper {
         public String label;
         public String color;
 
-        // Necessary for list.contains() in Activity
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;

@@ -97,7 +97,7 @@ public class AdminOrgsFragment extends Fragment {
         btnLogin.setTextSize(12f);
         btnLogin.setPadding(4, 4, 4, 4);
         btnLogin.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(Color.parseColor("#2563EB")));
+                android.content.res.ColorStateList.valueOf(Color.parseColor("#80EF80")));
         btnLogin.setTextColor(Color.WHITE);
         btnLogin.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), OrganizationHomeActivity.class);

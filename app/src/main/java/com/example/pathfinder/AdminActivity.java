@@ -98,17 +98,7 @@ public class AdminActivity extends AppCompatActivity {
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(dp(16), dp(16), dp(16), dp(80));
 
-        // ── Tags dropdown ─────────────────────────────────────────────────────
-        layout.addView(boldLabel("Tags:"));
-        addGap(layout, 8);
-
-        Spinner spinner = new Spinner(this);
-        refreshTagSpinner(spinner);
-        layout.addView(spinner, params(ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-        addGap(layout, 20);
-
-        // ── Label input ───────────────────────────────────────────────────────
+        // ── Label input ─────────────────────────────────────
         LinearLayout labelRow = new LinearLayout(this);
         labelRow.setOrientation(LinearLayout.HORIZONTAL);
         labelRow.setGravity(Gravity.CENTER_VERTICAL);
@@ -125,25 +115,9 @@ public class AdminActivity extends AppCompatActivity {
         layout.addView(labelRow, params(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        // Pre-fill label + color when spinner selection changes
-        spinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
-            @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-                List<DBHelper.Tag> tags = dbHelper.getAllTags();
-                if (!tags.isEmpty() && pos < tags.size()) {
-                    DBHelper.Tag t = tags.get(pos);
-                    etLabel.setText(t.label);
-                    selectedTagColor = t.color;
-                    if (colorPreviewBox != null)
-                        setRoundedColor(colorPreviewBox, Color.parseColor(selectedTagColor));
-                }
-            }
-            @Override public void onNothingSelected(AdapterView<?> parent) {}
-        });
-
         addGap(layout, 20);
 
-        // ── Color section ─────────────────────────────────────────────────────
+        // ── Color section ─────────────────────────────────────
         layout.addView(boldLabel("Color:"));
         addGap(layout, 8);
 
@@ -155,7 +129,7 @@ public class AdminActivity extends AppCompatActivity {
         setRoundedColor(colorPreviewBox, Color.parseColor(selectedTagColor));
         layout.addView(colorPreviewBox, previewLp);
 
-        // Color swatches grid (5 columns × 4 rows = 20 colours)
+        // Color swatches grid (5x4)
         int[] swatchColors = {
                 0xFFE53935, 0xFFD81B60, 0xFF8E24AA, 0xFF5E35B1, 0xFF3949AB,
                 0xFF1E88E5, 0xFF039BE5, 0xFF00ACC1, 0xFF00897B, 0xFF43A047,
@@ -186,7 +160,7 @@ public class AdminActivity extends AppCompatActivity {
 
         addGap(layout, 24);
 
-        // ── Save button ───────────────────────────────────────────────────────
+        // ── Save button ─────────────────────────────────────
         Button btnSave = styledButton("Save Tag", "#1E3A8A");
         btnSave.setOnClickListener(v -> {
             String label = etLabel.getText().toString().trim();
@@ -197,13 +171,55 @@ public class AdminActivity extends AppCompatActivity {
             if (dbHelper.saveTag(label, selectedTagColor)) {
                 Toast.makeText(this, "Tag saved!", Toast.LENGTH_SHORT).show();
                 etLabel.setText("");
-                refreshTagSpinner(spinner);
+                showTab(0); // refresh
             } else {
                 Toast.makeText(this, "Save failed", Toast.LENGTH_SHORT).show();
             }
         });
         layout.addView(btnSave, params(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
+
+        addGap(layout, 20);
+
+        // ── Existing tags with color box + Delete buttons ─────────────
+        layout.addView(boldLabel("Existing Tags:"));
+        addGap(layout, 8);
+        List<DBHelper.Tag> tags = dbHelper.getAllTags();
+        for (DBHelper.Tag t : tags) {
+            LinearLayout row = new LinearLayout(this);
+            row.setOrientation(LinearLayout.HORIZONTAL);
+            row.setGravity(Gravity.CENTER_VERTICAL);
+            row.setPadding(dp(4), dp(6), dp(4), dp(6));
+
+            TextView tv = new TextView(this);
+            tv.setText(t.label);
+            tv.setTextSize(14f);
+            tv.setTextColor(Color.parseColor("#222222"));
+            tv.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 2f));
+            row.addView(tv);
+
+            // Color rectangle
+            View colorBox = new View(this);
+            setRoundedColor(colorBox, Color.parseColor(t.color));
+            LinearLayout.LayoutParams colorLp = new LinearLayout.LayoutParams(dp(32), dp(32));
+            colorLp.setMargins(dp(6), 0, dp(6), 0);
+            row.addView(colorBox, colorLp);
+
+            Button btnDel = smallButton("Delete", "#E53935");
+            btnDel.setOnClickListener(v -> new AlertDialog.Builder(this)
+                    .setTitle("Delete Tag")
+                    .setMessage("Delete tag: " + t.label + "?")
+                    .setPositiveButton("Delete", (d, w) -> {
+                        dbHelper.deleteTag(t.id);
+                        Toast.makeText(this, "Deleted", Toast.LENGTH_SHORT).show();
+                        showTab(0); // refresh the tab
+                    })
+                    .setNegativeButton("Cancel", null)
+                    .show());
+            row.addView(btnDel, new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f));
+
+            layout.addView(row);
+        }
 
         scroll.addView(layout);
         return scroll;

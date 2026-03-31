@@ -251,6 +251,18 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.delete("students", "email=?", new String[]{email}) > 0;
     }
 
+    public boolean updateStudent(String email, String name, String age,
+                                 String course, String phone, byte[] photoBytes) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("name",   name);
+        cv.put("age",    age);
+        cv.put("course", course);
+        cv.put("phone",  phone);
+        if (photoBytes != null) cv.put("photo", photoBytes);
+        return db.update("students", cv, "email=?", new String[]{email}) > 0;
+    }
+
     /** Returns full student profile by email (no password) */
     public StudentProfile getStudentProfile(String email) {
         SQLiteDatabase db = this.getReadableDatabase();

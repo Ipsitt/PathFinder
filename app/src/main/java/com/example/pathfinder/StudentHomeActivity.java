@@ -151,7 +151,12 @@ public class StudentHomeActivity extends AppCompatActivity {
             int id = item.getItemId();
             if (id == R.id.menu_posts)    { etSearch.setText(""); adapter.updatePosts(rankAndFilter(allPosts, null)); return true; }
             if (id == R.id.menu_logout)   { Intent i = new Intent(this, StudentLoginActivity.class); i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); startActivity(i); return true; }
-            if (id == R.id.menu_profile)  Toast.makeText(this, "Profile — coming soon",  Toast.LENGTH_SHORT).show();
+            if (id == R.id.menu_profile) {
+                Intent intent = new Intent(this, StudentProfileActivity.class);
+                intent.putExtra("email", studentEmail);
+                startActivity(intent);
+                return true;
+            }
             if (id == R.id.menu_applied)  Toast.makeText(this, "Applied — coming soon",  Toast.LENGTH_SHORT).show();
             if (id == R.id.menu_requests) Toast.makeText(this, "Requests — coming soon", Toast.LENGTH_SHORT).show();
             if (id == R.id.menu_history)  Toast.makeText(this, "History — coming soon",  Toast.LENGTH_SHORT).show();

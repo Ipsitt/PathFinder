@@ -24,6 +24,7 @@
         <activity android:name=".PostDetailActivity"/>
         <activity android:name=".OrgRequestsActivity"/>
         <activity android:name=".StudentProfileActivity" />
+        <activity android:name=".StudentAppliedActivity" />
 
         <activity
             android:name=".MainActivity"

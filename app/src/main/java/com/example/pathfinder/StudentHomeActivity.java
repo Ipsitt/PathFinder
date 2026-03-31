@@ -157,7 +157,12 @@ public class StudentHomeActivity extends AppCompatActivity {
                 startActivity(intent);
                 return true;
             }
-            if (id == R.id.menu_applied)  Toast.makeText(this, "Applied — coming soon",  Toast.LENGTH_SHORT).show();
+            if (id == R.id.menu_applied) {
+                Intent intent = new Intent(this, StudentAppliedActivity.class);
+                intent.putExtra("email", studentEmail);
+                startActivity(intent);
+                return true;
+            }
             if (id == R.id.menu_requests) Toast.makeText(this, "Requests — coming soon", Toast.LENGTH_SHORT).show();
             if (id == R.id.menu_history)  Toast.makeText(this, "History — coming soon",  Toast.LENGTH_SHORT).show();
             return true;

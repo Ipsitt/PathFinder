@@ -460,6 +460,64 @@ public class DBHelper extends SQLiteOpenHelper {
                 SQLiteDatabase.CONFLICT_IGNORE) != -1;
     }
 
+    /** Returns all posts the student has applied to, with tags + org image */
+    public List<Post> getAppliedPosts(String studentEmail) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Post> posts = new ArrayList<>();
+
+        Cursor pc = db.rawQuery(
+                "SELECT p.id, p.title, p.description, p.stipend, p.time_period, " +
+                        "p.org_name, p.org_email, o.image " +
+                        "FROM applications a " +
+                        "JOIN posts p ON p.id = a.post_id " +
+                        "LEFT JOIN organizations o ON o.email = p.org_email " +
+                        "WHERE a.student_email = ? " +
+                        "ORDER BY a.id DESC",
+                new String[]{studentEmail});
+
+        while (pc.moveToNext()) {
+            Post post = new Post();
+            post.id          = pc.getInt(0);
+            post.title       = pc.getString(1);
+            post.description = pc.getString(2);
+            post.stipend     = pc.getString(3);
+            post.timePeriod  = pc.getString(4);
+            post.orgName     = pc.getString(5);
+            post.orgEmail    = pc.getString(6);
+            post.orgImage    = pc.getBlob(7);
+            post.tags        = new ArrayList<>();
+            posts.add(post);
+        }
+        pc.close();
+
+        if (posts.isEmpty()) return posts;
+
+        // Load tags for each applied post
+        android.util.SparseArray<Post> postMap = new android.util.SparseArray<>();
+        for (Post p : posts) postMap.put(p.id, p);
+
+        Cursor tc = db.rawQuery(
+                "SELECT pt.post_id, t.id, t.label, t.color " +
+                        "FROM post_tags pt JOIN tags t ON t.id = pt.tag_id " +
+                        "WHERE pt.post_id IN " +
+                        "(SELECT post_id FROM applications WHERE student_email = ?)",
+                new String[]{studentEmail});
+
+        while (tc.moveToNext()) {
+            Post p = postMap.get(tc.getInt(0));
+            if (p != null) {
+                Tag tag = new Tag();
+                tag.id    = tc.getInt(1);
+                tag.label = tc.getString(2);
+                tag.color = tc.getString(3);
+                p.tags.add(tag);
+            }
+        }
+        tc.close();
+
+        return posts;
+    }
+
     // ── Tag methods ───────────────────────────────────────────────────────
 
     public List<Tag> getAllTags() {

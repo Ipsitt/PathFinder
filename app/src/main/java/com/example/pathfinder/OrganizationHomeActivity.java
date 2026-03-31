@@ -26,11 +26,10 @@ public class OrganizationHomeActivity extends AppCompatActivity {
 
     ImageView imgOrg;
     EditText etOrgName, etOrgDescription;
-    Button btnUpdate;
-    CardView cardViewRequests, cardViewInterns;
+        Button btnUpdate;
 
     // Bottom Nav Buttons
-    LinearLayout bottomPostBtn, bottomInternsBtn, bottomHistoryBtn;
+    LinearLayout bottomHomeBtn, bottomPostBtn, bottomInternsBtn, bottomHistoryBtn;
 
     DBHelper dbHelper;
     String orgEmail;
@@ -68,10 +67,9 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         etOrgName        = findViewById(R.id.etOrgName);
         etOrgDescription = findViewById(R.id.etOrgDescription);
         btnUpdate        = findViewById(R.id.btnUpdate);
-        cardViewRequests = findViewById(R.id.cardViewRequests);
-        cardViewInterns  = findViewById(R.id.cardViewInterns);
 
         // Initialize Bottom Nav Views
+        bottomHomeBtn    = findViewById(R.id.bottomHomeBtn);
         bottomPostBtn    = findViewById(R.id.bottomPostBtn);
         bottomInternsBtn = findViewById(R.id.bottomInternsBtn);
         bottomHistoryBtn = findViewById(R.id.bottomHistoryBtn);
@@ -109,18 +107,11 @@ public class OrganizationHomeActivity extends AppCompatActivity {
             }
         });
 
-        // View Intern Requests
-        cardViewRequests.setOnClickListener(v -> {
-            Intent intent = new Intent(this, OrgRequestsActivity.class);
-            intent.putExtra("email", orgEmail);
-            startActivity(intent);
-        });
-
-        // View available interns card
-        cardViewInterns.setOnClickListener(v ->
-                Toast.makeText(this, "View available interns — coming soon", Toast.LENGTH_SHORT).show());
-
         // --- Bottom Navigation Listeners ---
+        
+        bottomHomeBtn.setOnClickListener(v -> {
+            Toast.makeText(this, "You are already here", Toast.LENGTH_SHORT).show();
+        });
 
         bottomPostBtn.setOnClickListener(v -> {
             Intent intent = new Intent(this, PostActivity.class);
@@ -129,11 +120,15 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         });
 
         bottomInternsBtn.setOnClickListener(v -> {
-            Toast.makeText(this, "You are already here", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, OrgRequestsActivity.class);
+            intent.putExtra("email", orgEmail);
+            startActivity(intent);
         });
 
         bottomHistoryBtn.setOnClickListener(v -> {
-            Toast.makeText(this, "History feature coming soon", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, OrganizationHistoryActivity.class);
+            intent.putExtra("email", orgEmail);
+            startActivity(intent);
         });
     }
 

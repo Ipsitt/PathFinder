@@ -137,11 +137,22 @@ public class PostDetailActivity extends AppCompatActivity {
                 Toast.makeText(this, "Log in to sign up", Toast.LENGTH_SHORT).show();
                 return;
             }
-            boolean success = dbHelper.applyToPost(postId, studentEmail);
-            if (success) {
-                Toast.makeText(this, "Successfully signed up!", Toast.LENGTH_SHORT).show();
+            if (dbHelper.hasApplied(postId, studentEmail)) {
+                // Already applied, so unapply (un-sign up)
+                boolean success = dbHelper.unapplyFromPost(postId, studentEmail);
+                if (success) {
+                    Toast.makeText(this, "Un-signed up successfully", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Failed to un-sign up", Toast.LENGTH_SHORT).show();
+                }
             } else {
-                Toast.makeText(this, "Already signed up", Toast.LENGTH_SHORT).show();
+                // Not applied yet, so sign up
+                boolean success = dbHelper.applyToPost(postId, studentEmail);
+                if (success) {
+                    Toast.makeText(this, "Successfully signed up!", Toast.LENGTH_SHORT).show();
+                } else {
+                    Toast.makeText(this, "Failed to sign up", Toast.LENGTH_SHORT).show();
+                }
             }
             updateSignUpButton(finalPost);
         });
@@ -152,7 +163,7 @@ public class PostDetailActivity extends AppCompatActivity {
             btnSignUp.setText("Signed Up ✓");
             btnSignUp.setBackgroundTintList(
                     android.content.res.ColorStateList.valueOf(Color.parseColor("#16A34A")));
-            btnSignUp.setEnabled(false);
+            btnSignUp.setEnabled(true);
         } else {
             btnSignUp.setText("Sign Up");
             btnSignUp.setBackgroundTintList(

@@ -19,6 +19,7 @@ public class PostActivity extends AppCompatActivity {
     Spinner spTagDropdown;
     TextView tvSelectedTags;
     Button btnPost;
+    android.widget.LinearLayout bottomHomeBtn, bottomPostBtn, bottomInternsBtn, bottomHistoryBtn;
 
     DBHelper dbHelper;
     List<DBHelper.Tag> allTags;
@@ -29,7 +30,22 @@ public class PostActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        
+        // Edge-to-edge support
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(android.graphics.Color.TRANSPARENT);
+        new androidx.core.view.WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightStatusBars(true);
+
         setContentView(R.layout.activity_post);
+
+        // Handle insets for padding — camera hole fix
+        View topBar = findViewById(R.id.postTopBar);
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(topBar, (v, insets) -> {
+            androidx.core.graphics.Insets statusBars = insets.getInsets(androidx.core.view.WindowInsetsCompat.Type.statusBars());
+            v.setPadding(v.getPaddingLeft(), statusBars.top + dp(16), v.getPaddingRight(), v.getPaddingBottom());
+            return insets;
+        });
 
         dbHelper = new DBHelper(this);
 
@@ -40,6 +56,10 @@ public class PostActivity extends AppCompatActivity {
         spTagDropdown = findViewById(R.id.spTagDropdown);
         tvSelectedTags = findViewById(R.id.tvSelectedTags);
         btnPost = findViewById(R.id.btnPost);
+        bottomHomeBtn = findViewById(R.id.bottomHomeBtn);
+        bottomPostBtn = findViewById(R.id.bottomPostBtn);
+        bottomInternsBtn = findViewById(R.id.bottomInternsBtn);
+        bottomHistoryBtn = findViewById(R.id.bottomHistoryBtn);
 
         userEmail = getIntent().getStringExtra("email");
         if (userEmail != null && !userEmail.isEmpty()) {
@@ -83,6 +103,30 @@ public class PostActivity extends AppCompatActivity {
         });
 
         btnPost.setOnClickListener(v -> submitPost());
+
+        setupBottomNav();
+    }
+
+    private void setupBottomNav() {
+        bottomHomeBtn.setOnClickListener(v -> {
+            android.content.Intent intent = new android.content.Intent(this, OrganizationHomeActivity.class);
+            intent.putExtra("email", userEmail);
+            intent.addFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP | android.content.Intent.FLAG_ACTIVITY_SINGLE_TOP);
+            startActivity(intent);
+        });
+        bottomPostBtn.setOnClickListener(v -> {
+            Toast.makeText(this, "You are already here", Toast.LENGTH_SHORT).show();
+        });
+        bottomInternsBtn.setOnClickListener(v -> {
+            android.content.Intent intent = new android.content.Intent(this, OrgRequestsActivity.class);
+            intent.putExtra("email", userEmail);
+            startActivity(intent);
+        });
+        bottomHistoryBtn.setOnClickListener(v -> {
+            android.content.Intent intent = new android.content.Intent(this, OrganizationHistoryActivity.class);
+            intent.putExtra("email", userEmail);
+            startActivity(intent);
+        });
     }
 
     private void loadTagsIntoSpinner() {
@@ -132,5 +176,8 @@ public class PostActivity extends AppCompatActivity {
             Toast.makeText(this, "Post saved successfully!", Toast.LENGTH_SHORT).show();
             finish();
         }
+    }
+    private int dp(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
     }
 }

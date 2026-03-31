@@ -68,7 +68,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
 
     private void loadRequests() {
         requestsContainer.removeAllViews();
-        List<DBHelper.OrgPost> posts = dbHelper.getPostsForOrg(orgEmail);
+        List<DBHelper.OrgPost> posts = dbHelper.getPostsForOrg(orgEmail, true);
 
         if (posts.isEmpty()) {
             TextView empty = new TextView(this);

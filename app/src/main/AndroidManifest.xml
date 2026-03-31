@@ -21,10 +21,14 @@
         <activity android:name=".OrganizationHomeActivity" />
         <activity android:name=".AdminActivity" />
         <activity android:name=".PostActivity" />
+        <activity android:name=".EditPostActivity" />
         <activity android:name=".PostDetailActivity"/>
         <activity android:name=".OrgRequestsActivity"/>
         <activity android:name=".StudentProfileActivity" />
         <activity android:name=".StudentAppliedActivity" />
+        <activity android:name=".StudentHistoryActivity" />
+        <activity android:name=".OrganizationHistoryActivity" />
+        <activity android:name=".OrgHistoryInternsActivity" />
 
         <activity
             android:name=".MainActivity"

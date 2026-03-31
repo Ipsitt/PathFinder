@@ -164,7 +164,12 @@ public class StudentHomeActivity extends AppCompatActivity {
                 return true;
             }
             if (id == R.id.menu_requests) Toast.makeText(this, "Requests — coming soon", Toast.LENGTH_SHORT).show();
-            if (id == R.id.menu_history)  Toast.makeText(this, "History — coming soon",  Toast.LENGTH_SHORT).show();
+            if (id == R.id.menu_history) {
+                Intent intent = new Intent(this, StudentHistoryActivity.class);
+                intent.putExtra("email", studentEmail);
+                startActivity(intent);
+                return true;
+            }
             return true;
         });
         popup.show();

@@ -12,7 +12,7 @@ import java.util.List;
 public class DBHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "PathFinder.db";
-    private static final int DB_VERSION = 9; // bumped for recruitments table
+    private static final int DB_VERSION = 11; // bumped for posts is_completed column
 
     public DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -65,7 +65,8 @@ public class DBHelper extends SQLiteOpenHelper {
                 "stipend TEXT," +
                 "time_period TEXT," +
                 "org_name TEXT," +
-                "org_email TEXT)");
+                "org_email TEXT," +
+                "is_completed INTEGER DEFAULT 0)");
 
         db.execSQL("CREATE TABLE post_tags(" +
                 "post_id INTEGER," +
@@ -88,6 +89,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "post_id INTEGER," +
                 "student_email TEXT," +
                 "org_email TEXT," +
+                "certificate BLOB," +
                 "UNIQUE(post_id, student_email)," +
                 "FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE)");
 
@@ -141,15 +143,23 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldV, int newV) {
-        db.execSQL("DROP TABLE IF EXISTS recruitments");
-        db.execSQL("DROP TABLE IF EXISTS applications");
-        db.execSQL("DROP TABLE IF EXISTS post_tags");
-        db.execSQL("DROP TABLE IF EXISTS student_tags");
-        db.execSQL("DROP TABLE IF EXISTS posts");
-        db.execSQL("DROP TABLE IF EXISTS tags");
-        db.execSQL("DROP TABLE IF EXISTS students");
-        db.execSQL("DROP TABLE IF EXISTS organizations");
-        onCreate(db);
+        if (oldV == 9 && newV >= 10) {
+            db.execSQL("ALTER TABLE recruitments ADD COLUMN certificate BLOB");
+        }
+        if (oldV >= 9 && oldV < 11 && newV >= 11) {
+            db.execSQL("ALTER TABLE posts ADD COLUMN is_completed INTEGER DEFAULT 0");
+        }
+        if (oldV < 9) {
+            db.execSQL("DROP TABLE IF EXISTS recruitments");
+            db.execSQL("DROP TABLE IF EXISTS applications");
+            db.execSQL("DROP TABLE IF EXISTS post_tags");
+            db.execSQL("DROP TABLE IF EXISTS student_tags");
+            db.execSQL("DROP TABLE IF EXISTS posts");
+            db.execSQL("DROP TABLE IF EXISTS tags");
+            db.execSQL("DROP TABLE IF EXISTS students");
+            db.execSQL("DROP TABLE IF EXISTS organizations");
+            onCreate(db);
+        }
     }
 
     // ── Password hashing ──────────────────────────────────────────────────
@@ -405,6 +415,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         "p.org_name, p.org_email, o.image " +
                         "FROM posts p " +
                         "LEFT JOIN organizations o ON o.email = p.org_email " +
+                        "WHERE (p.is_completed IS NULL OR p.is_completed = 0) " +
                         "ORDER BY p.id DESC", null);
 
         while (pc.moveToNext()) {
@@ -444,7 +455,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return posts;
     }
 
-    public List<OrgPost> getPostsForOrg(String orgEmail) {
+    public List<OrgPost> getPostsForOrg(String orgEmail, boolean activeOnly) {
         SQLiteDatabase db = this.getReadableDatabase();
         List<OrgPost> list = new ArrayList<>();
 
@@ -454,10 +465,13 @@ public class DBHelper extends SQLiteOpenHelper {
         String cleanEmail = orgEmail.trim().toLowerCase();
 
         // 2. Use SQL functions LOWER and TRIM on the column itself
-        String query = "SELECT id, title, " +
-                "(SELECT COUNT(*) FROM applications WHERE post_id = posts.id) " +
+        String activeClause = activeOnly ? " AND (is_completed IS NULL OR is_completed = 0) " : "";
+        String query = "SELECT id, title, description, stipend, time_period, " +
+                "(SELECT COUNT(*) FROM applications WHERE post_id = posts.id), " +
+                "(SELECT COUNT(*) FROM recruitments WHERE post_id = posts.id), " +
+                "is_completed " +
                 "FROM posts " +
-                "WHERE LOWER(TRIM(org_email)) = ? " +
+                "WHERE LOWER(TRIM(org_email)) = ? " + activeClause +
                 "ORDER BY id DESC";
 
         Cursor c = db.rawQuery(query, new String[]{cleanEmail});
@@ -466,10 +480,41 @@ public class DBHelper extends SQLiteOpenHelper {
             OrgPost op = new OrgPost();
             op.postId         = c.getInt(0);
             op.title          = c.getString(1);
-            op.applicantCount = c.getInt(2);
+            op.description    = c.getString(2);
+            op.stipend        = c.getString(3);
+            op.timePeriod     = c.getString(4);
+            op.applicantCount = c.getInt(5);
+            op.recruitedCount = c.getInt(6);
+            op.isCompleted    = (c.getInt(7) == 1);
+            op.tags           = new ArrayList<>();
             list.add(op);
         }
         c.close();
+
+        if (list.isEmpty()) return list;
+
+        android.util.SparseArray<OrgPost> postMap = new android.util.SparseArray<>();
+        for (OrgPost op : list) postMap.put(op.postId, op);
+
+        Cursor tc = db.rawQuery(
+                "SELECT pt.post_id, t.id, t.label, t.color " +
+                        "FROM post_tags pt JOIN tags t ON t.id = pt.tag_id " +
+                        "WHERE pt.post_id IN " +
+                        "(SELECT id FROM posts WHERE LOWER(TRIM(org_email)) = ?" + activeClause + ")",
+                new String[]{cleanEmail});
+
+        while (tc.moveToNext()) {
+            OrgPost op = postMap.get(tc.getInt(0));
+            if (op != null) {
+                Tag tag = new Tag();
+                tag.id    = tc.getInt(1);
+                tag.label = tc.getString(2);
+                tag.color = tc.getString(3);
+                op.tags.add(tag);
+            }
+        }
+        tc.close();
+
         return list;
     }
     public int getGlobalPostCount() {
@@ -479,6 +524,47 @@ public class DBHelper extends SQLiteOpenHelper {
         int count = c.getInt(0);
         c.close();
         return count;
+    }
+
+    public boolean updatePost(int postId, String title, String description, String stipend, String timePeriod, List<Integer> tagIds) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("title", title);
+        cv.put("description", description);
+        cv.put("stipend", stipend);
+        cv.put("time_period", timePeriod);
+
+        int rows = db.update("posts", cv, "id=?", new String[]{String.valueOf(postId)});
+        if (rows > 0 && tagIds != null) {
+            db.delete("post_tags", "post_id=?", new String[]{String.valueOf(postId)});
+            int count = Math.min(tagIds.size(), 5);
+            for (int i = 0; i < count; i++) {
+                ContentValues tagCv = new ContentValues();
+                tagCv.put("post_id", postId);
+                tagCv.put("tag_id", tagIds.get(i));
+                db.insertWithOnConflict("post_tags", null, tagCv, SQLiteDatabase.CONFLICT_IGNORE);
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public boolean markPostCompleted(int postId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("is_completed", 1);
+        return db.update("posts", cv, "id=?", new String[]{String.valueOf(postId)}) > 0;
+    }
+
+    public boolean isPostCompleted(int postId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery("SELECT is_completed FROM posts WHERE id=?", new String[]{String.valueOf(postId)});
+        boolean completed = false;
+        if (c.moveToFirst()) {
+            completed = c.getInt(0) == 1;
+        }
+        c.close();
+        return completed;
     }
 
     // ── Recruitment methods ───────────────────────────────────────────────
@@ -537,6 +623,39 @@ public class DBHelper extends SQLiteOpenHelper {
         return list;
     }
 
+    /** Returns list of student emails who are recruited for a specific post */
+    public List<String> getRecruitedStudentsForPost(int postId) {
+        List<String> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT student_email FROM recruitments WHERE post_id=?",
+                new String[]{String.valueOf(postId)});
+        while (c.moveToNext()) list.add(c.getString(0));
+        c.close();
+        return list;
+    }
+
+    public boolean updateRecruitmentCertificate(int postId, String studentEmail, byte[] certificateBytes) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("certificate", certificateBytes);
+        return db.update("recruitments", cv, "post_id=? AND student_email=?",
+                new String[]{String.valueOf(postId), studentEmail}) > 0;
+    }
+
+    public byte[] getRecruitmentCertificate(int postId, String studentEmail) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT certificate FROM recruitments WHERE post_id=? AND student_email=?",
+                new String[]{String.valueOf(postId), studentEmail});
+        byte[] cert = null;
+        if (c.moveToFirst()) {
+            cert = c.getBlob(0);
+        }
+        c.close();
+        return cert;
+    }
+
     // ── Application methods ───────────────────────────────────────────────
 
     /** Returns true if student has already applied to this post */
@@ -550,7 +669,6 @@ public class DBHelper extends SQLiteOpenHelper {
         return applied;
     }
 
-    /** Submits an application. Returns false if already applied. */
     public boolean applyToPost(int postId, String studentEmail) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -558,6 +676,13 @@ public class DBHelper extends SQLiteOpenHelper {
         cv.put("student_email", studentEmail);
         return db.insertWithOnConflict("applications", null, cv,
                 SQLiteDatabase.CONFLICT_IGNORE) != -1;
+    }
+
+    /** Removes an application. */
+    public boolean unapplyFromPost(int postId, String studentEmail) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        return db.delete("applications", "post_id=? AND student_email=?",
+                new String[]{String.valueOf(postId), studentEmail}) > 0;
     }
 
     /** Returns all posts the student has applied to, with tags + org image */
@@ -571,7 +696,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         "FROM applications a " +
                         "JOIN posts p ON p.id = a.post_id " +
                         "LEFT JOIN organizations o ON o.email = p.org_email " +
-                        "WHERE a.student_email = ? " +
+                        "WHERE a.student_email = ? AND (p.is_completed IS NULL OR p.is_completed = 0) " +
                         "ORDER BY a.id DESC",
                 new String[]{studentEmail});
 
@@ -601,6 +726,62 @@ public class DBHelper extends SQLiteOpenHelper {
                         "FROM post_tags pt JOIN tags t ON t.id = pt.tag_id " +
                         "WHERE pt.post_id IN " +
                         "(SELECT post_id FROM applications WHERE student_email = ?)",
+                new String[]{studentEmail});
+
+        while (tc.moveToNext()) {
+            Post p = postMap.get(tc.getInt(0));
+            if (p != null) {
+                Tag tag = new Tag();
+                tag.id    = tc.getInt(1);
+                tag.label = tc.getString(2);
+                tag.color = tc.getString(3);
+                p.tags.add(tag);
+            }
+        }
+        tc.close();
+
+        return posts;
+    }
+
+    public List<Post> getStudentHistoryPosts(String studentEmail) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<Post> posts = new ArrayList<>();
+
+        Cursor pc = db.rawQuery(
+                "SELECT p.id, p.title, p.description, p.stipend, p.time_period, " +
+                        "p.org_name, p.org_email, o.image " +
+                        "FROM recruitments r " +
+                        "JOIN posts p ON p.id = r.post_id " +
+                        "LEFT JOIN organizations o ON o.email = p.org_email " +
+                        "WHERE r.student_email = ? AND p.is_completed = 1 " +
+                        "ORDER BY r.id DESC",
+                new String[]{studentEmail});
+
+        while (pc.moveToNext()) {
+            Post post = new Post();
+            post.id          = pc.getInt(0);
+            post.title       = pc.getString(1);
+            post.description = pc.getString(2);
+            post.stipend     = pc.getString(3);
+            post.timePeriod  = pc.getString(4);
+            post.orgName     = pc.getString(5);
+            post.orgEmail    = pc.getString(6);
+            post.orgImage    = pc.getBlob(7);
+            post.tags        = new ArrayList<>();
+            posts.add(post);
+        }
+        pc.close();
+
+        if (posts.isEmpty()) return posts;
+
+        android.util.SparseArray<Post> postMap = new android.util.SparseArray<>();
+        for (Post p : posts) postMap.put(p.id, p);
+
+        Cursor tc = db.rawQuery(
+                "SELECT pt.post_id, t.id, t.label, t.color " +
+                        "FROM post_tags pt JOIN tags t ON t.id = pt.tag_id " +
+                        "WHERE pt.post_id IN " +
+                        "(SELECT post_id FROM recruitments WHERE student_email = ?)",
                 new String[]{studentEmail});
 
         while (tc.moveToNext()) {
@@ -687,7 +868,13 @@ public class DBHelper extends SQLiteOpenHelper {
     public static class OrgPost {
         public int postId;
         public String title;
+        public String description;
+        public String stipend;
+        public String timePeriod;
         public int applicantCount;
+        public int recruitedCount;
+        public boolean isCompleted;
+        public List<Tag> tags;
     }
 
     public static class RecruitmentEntry {

@@ -12,7 +12,7 @@ import java.util.List;
 public class DBHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "PathFinder.db";
-    private static final int DB_VERSION = 8; // bumped for applications table
+    private static final int DB_VERSION = 9; // bumped for recruitments table
 
     public DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -81,10 +81,67 @@ public class DBHelper extends SQLiteOpenHelper {
                 "student_email TEXT," +
                 "UNIQUE(post_id, student_email)," +
                 "FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE)");
+
+        // Recruitments: org recruits a student for a specific post
+        db.execSQL("CREATE TABLE recruitments(" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "post_id INTEGER," +
+                "student_email TEXT," +
+                "org_email TEXT," +
+                "UNIQUE(post_id, student_email)," +
+                "FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE)");
+
+        // ── Seed: Demo Organization ───────────────────────────────────────────
+        ContentValues seedOrg = new ContentValues();
+        seedOrg.put("name",        "OG Media");
+        seedOrg.put("email",       "og@og.com");
+        seedOrg.put("password",    hashPassword("o1"));
+        seedOrg.put("description", "Leading content and media organization.");
+        db.insert("organizations", null, seedOrg);
+
+        // ── Seed: Demo Student (5 tags: Android, Java, Python, Web Dev, UI/UX)
+        ContentValues seedStudent = new ContentValues();
+        seedStudent.put("name",   "Demo Student");
+        seedStudent.put("email",  "st@st.com");
+        seedStudent.put("password", hashPassword("s1"));
+        seedStudent.put("age",    "21");
+        seedStudent.put("course", "Computer Science");
+        seedStudent.put("phone",  "9800000000");
+        db.insert("students", null, seedStudent);
+
+        // tag IDs are 1-indexed (AUTOINCREMENT from 1): Android=1, Java=2, Python=3, WebDev=4, UI/UX=5
+        int[] studentTagIds = {1, 2, 3, 4, 5};
+        for (int tagId : studentTagIds) {
+            ContentValues stTag = new ContentValues();
+            stTag.put("student_email", "st@st.com");
+            stTag.put("tag_id", tagId);
+            db.insert("student_tags", null, stTag);
+        }
+
+        // ── Seed: Demo Post ("Content Creator") ──────────────────────────────
+        ContentValues seedPost = new ContentValues();
+        seedPost.put("title",       "Content Creator");
+        seedPost.put("description", "We are looking for a creative content creator to join our team and help produce engaging digital content.");
+        seedPost.put("stipend",     "5000");
+        seedPost.put("time_period", "4 Weeks");
+        seedPost.put("org_name",    "OG Media");
+        seedPost.put("org_email",   "og@og.com");
+        long postId = db.insert("posts", null, seedPost);
+
+        // Tag the post with UI/UX (id=5) and Web Development (id=4)
+        if (postId != -1) {
+            for (int tagId : new int[]{4, 5}) {
+                ContentValues ptag = new ContentValues();
+                ptag.put("post_id", postId);
+                ptag.put("tag_id",  tagId);
+                db.insert("post_tags", null, ptag);
+            }
+        }
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldV, int newV) {
+        db.execSQL("DROP TABLE IF EXISTS recruitments");
         db.execSQL("DROP TABLE IF EXISTS applications");
         db.execSQL("DROP TABLE IF EXISTS post_tags");
         db.execSQL("DROP TABLE IF EXISTS student_tags");
@@ -415,7 +472,6 @@ public class DBHelper extends SQLiteOpenHelper {
         c.close();
         return list;
     }
-    // Add this to DBHelper.java
     public int getGlobalPostCount() {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery("SELECT COUNT(*) FROM posts", null);
@@ -423,6 +479,50 @@ public class DBHelper extends SQLiteOpenHelper {
         int count = c.getInt(0);
         c.close();
         return count;
+    }
+
+    // ── Recruitment methods ───────────────────────────────────────────────
+
+    /** Recruits a student for a post. Returns false if already recruited. */
+    public boolean recruitStudent(int postId, String studentEmail, String orgEmail) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("post_id", postId);
+        cv.put("student_email", studentEmail);
+        cv.put("org_email", orgEmail);
+        return db.insertWithOnConflict("recruitments", null, cv,
+                SQLiteDatabase.CONFLICT_IGNORE) != -1;
+    }
+
+    /** Returns true if the student has been recruited for this post. */
+    public boolean isRecruited(int postId, String studentEmail) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT 1 FROM recruitments WHERE post_id=? AND student_email=?",
+                new String[]{String.valueOf(postId), studentEmail});
+        boolean recruited = c.getCount() > 0;
+        c.close();
+        return recruited;
+    }
+
+    /**
+     * Returns all (postId, orgEmail) pairs where the student was recruited.
+     * Used by StudentAppliedActivity to show "Accepted" state.
+     */
+    public List<RecruitmentEntry> getRecruitmentsForStudent(String studentEmail) {
+        List<RecruitmentEntry> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT post_id, org_email FROM recruitments WHERE student_email=?",
+                new String[]{studentEmail});
+        while (c.moveToNext()) {
+            RecruitmentEntry e = new RecruitmentEntry();
+            e.postId   = c.getInt(0);
+            e.orgEmail = c.getString(1);
+            list.add(e);
+        }
+        c.close();
+        return list;
     }
 
     /** Returns list of student emails who applied to a specific post */
@@ -588,5 +688,10 @@ public class DBHelper extends SQLiteOpenHelper {
         public int postId;
         public String title;
         public int applicantCount;
+    }
+
+    public static class RecruitmentEntry {
+        public int postId;
+        public String orgEmail;
     }
 }

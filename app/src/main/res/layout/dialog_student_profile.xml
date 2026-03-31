@@ -104,13 +104,32 @@
                 app:flexWrap="wrap"
                 android:layout_marginBottom="20dp"/>
 
-            <Button
-                android:id="@+id/dialogBtnClose"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="44dp"
-                android:text="Close"
-                android:backgroundTint="#1E3A8A"
-                android:textColor="#FFFFFF"/>
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="4dp">
+
+                <Button
+                    android:id="@+id/dialogBtnClose"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:layout_marginEnd="8dp"
+                    android:text="Close"
+                    android:backgroundTint="#64748B"
+                    android:textColor="#FFFFFF"/>
+
+                <Button
+                    android:id="@+id/dialogBtnRecruit"
+                    android:layout_width="0dp"
+                    android:layout_height="44dp"
+                    android:layout_weight="1"
+                    android:text="Recruit"
+                    android:backgroundTint="#16A34A"
+                    android:textColor="#FFFFFF"/>
+
+            </LinearLayout>
         </LinearLayout>
 
     </LinearLayout>

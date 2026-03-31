@@ -75,8 +75,14 @@ public class StudentAppliedActivity extends AppCompatActivity {
         } else {
             tvEmpty.setVisibility(View.GONE);
             rvApplied.setVisibility(View.VISIBLE);
-            // Reuse PostAdapter exactly — same cards, same click-to-detail behaviour
-            PostAdapter adapter = new PostAdapter(this, applied, studentEmail, null);
+
+            // Fetch which posts the student has been recruited for
+            List<DBHelper.RecruitmentEntry> recruitments =
+                    dbHelper.getRecruitmentsForStudent(studentEmail);
+
+            // Applied mode: shows "Accepted" banner on recruited cards
+            PostAdapter adapter = new PostAdapter(
+                    this, applied, studentEmail, null, true, recruitments);
             rvApplied.setAdapter(adapter);
         }
     }

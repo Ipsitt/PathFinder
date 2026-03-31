@@ -23,6 +23,8 @@ public class PostActivity extends AppCompatActivity {
     DBHelper dbHelper;
     List<DBHelper.Tag> allTags;
     List<DBHelper.Tag> selectedTags = new ArrayList<>();
+    String userEmail;
+    String orgName = "Org Name";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -38,6 +40,14 @@ public class PostActivity extends AppCompatActivity {
         spTagDropdown = findViewById(R.id.spTagDropdown);
         tvSelectedTags = findViewById(R.id.tvSelectedTags);
         btnPost = findViewById(R.id.btnPost);
+
+        userEmail = getIntent().getStringExtra("email");
+        if (userEmail != null && !userEmail.isEmpty()) {
+            DBHelper.Org org = dbHelper.getOrgByEmail(userEmail);
+            if (org != null && org.name != null && !org.name.isEmpty()) {
+                orgName = org.name;
+            }
+        }
 
         loadTagsIntoSpinner();
 
@@ -116,7 +126,8 @@ public class PostActivity extends AppCompatActivity {
         List<Integer> tagIds = new ArrayList<>();
         for (DBHelper.Tag t : selectedTags) tagIds.add(t.id);
 
-        long result = dbHelper.insertPost(title, desc, stipend, period, "Org Name", "org@example.com", tagIds);
+        String finalEmail = (userEmail != null && !userEmail.isEmpty()) ? userEmail : "org@example.com";
+        long result = dbHelper.insertPost(title, desc, stipend, period, orgName, finalEmail, tagIds);
         if (result != -1) {
             Toast.makeText(this, "Post saved successfully!", Toast.LENGTH_SHORT).show();
             finish();

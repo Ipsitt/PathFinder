@@ -155,5 +155,17 @@
             </HorizontalScrollView>
         </LinearLayout>
 
+        <!-- Row 5: Accepted banner — shown only for recruited students -->
+        <Button
+            android:id="@+id/btnAccepted"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="10dp"
+            android:text="🎉  Accepted"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:backgroundTint="#16A34A"
+            android:visibility="gone"/>
+
     </LinearLayout>
-</androidx.cardview.widget.CardView>
+</androidx.cardview.widget.CardView>

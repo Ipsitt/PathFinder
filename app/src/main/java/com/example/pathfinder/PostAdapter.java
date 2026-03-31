@@ -1,5 +1,6 @@
 package com.example.pathfinder;
 
+import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -8,9 +9,11 @@ import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Handler;
 import android.os.Looper;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -33,15 +36,41 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
     private final OnPostClickListener listener;
     private final String studentEmail; // passed so detail screen knows who's viewing
 
+    /**
+     * When true the adapter is being used inside StudentAppliedActivity.
+     * In this mode clicking the card still opens PostDetailActivity (read-only),
+     * and each card shows the "Accepted" button if the student was recruited.
+     */
+    private final boolean appliedMode;
+
+    /** Recruitment map: postId → orgEmail  (only populated in appliedMode) */
+    private final SparseArray<String> recruitmentMap = new SparseArray<>();
+
     private final ExecutorService imageExecutor = Executors.newFixedThreadPool(2);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
+    // ── Constructor used by StudentHomeActivity (normal browse mode) ───────
     public PostAdapter(Context context, List<Post> posts,
                        String studentEmail, OnPostClickListener listener) {
+        this(context, posts, studentEmail, listener, false, null);
+    }
+
+    // ── Full constructor ───────────────────────────────────────────────────
+    public PostAdapter(Context context, List<Post> posts,
+                       String studentEmail, OnPostClickListener listener,
+                       boolean appliedMode,
+                       List<DBHelper.RecruitmentEntry> recruitments) {
         this.context      = context;
         this.posts        = posts;
         this.studentEmail = studentEmail;
         this.listener     = listener;
+        this.appliedMode  = appliedMode;
+
+        if (recruitments != null) {
+            for (DBHelper.RecruitmentEntry e : recruitments) {
+                recruitmentMap.put(e.postId, e.orgEmail);
+            }
+        }
     }
 
     public void updatePosts(List<Post> newPosts) {
@@ -98,6 +127,30 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             }
         }
 
+        // ── "Accepted" banner (applied-mode only) ──
+        if (appliedMode && holder.btnAccepted != null) {
+            String orgEmailForPost = recruitmentMap.get(post.id);
+            if (orgEmailForPost != null) {
+                // Student was recruited for this post
+                holder.btnAccepted.setVisibility(View.VISIBLE);
+                holder.btnAccepted.setAllCaps(false);
+                final String orgMail = orgEmailForPost;
+                final String orgName = (post.orgName != null) ? post.orgName : "the recruiter";
+                holder.btnAccepted.setOnClickListener(v -> {
+                    new AlertDialog.Builder(context)
+                            .setTitle("🎉 Congratulations!")
+                            .setMessage("You have been accepted by the recruiter.\n\nSend an email to:\n" + orgMail + "\n\nto communicate further!")
+                            .setPositiveButton("Got it!", (dialog, which) -> dialog.dismiss())
+                            .setCancelable(true)
+                            .show();
+                });
+            } else {
+                holder.btnAccepted.setVisibility(View.GONE);
+            }
+        } else if (holder.btnAccepted != null) {
+            holder.btnAccepted.setVisibility(View.GONE);
+        }
+
         // ── Click → open PostDetailActivity ──
         holder.itemView.setOnClickListener(v -> {
             Intent intent = new Intent(context, PostDetailActivity.class);
@@ -151,6 +204,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         ImageView imgOrgPhoto;
         TextView tvTitle, tvOrgName, tvStipend, tvDuration, tvDescription;
         LinearLayout tagChipsContainer;
+        Button btnAccepted;
 
         PostViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -161,6 +215,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
             tvDuration        = itemView.findViewById(R.id.tvDuration);
             tvDescription     = itemView.findViewById(R.id.tvDescription);
             tagChipsContainer = itemView.findViewById(R.id.tagChipsContainer);
+            btnAccepted       = itemView.findViewById(R.id.btnAccepted);
         }
     }
 }

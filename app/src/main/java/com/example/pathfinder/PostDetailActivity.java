@@ -28,7 +28,7 @@ import java.util.concurrent.Executors;
 
 public class PostDetailActivity extends AppCompatActivity {
 
-    //This is a joke.
+//This is a joke
 
     DBHelper dbHelper;
     String studentEmail;

@@ -15,6 +15,9 @@
         </option>
       </GradleProjectSettings>
     </option>
+<<<<<<< HEAD
     <option name="parallelModelFetch" value="true" />
+=======
+>>>>>>> fb63bba028ce423338866549e7f758b7f69c19e2
   </component>
 </project>

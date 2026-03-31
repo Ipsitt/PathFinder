@@ -6,7 +6,6 @@
     android:layout_height="match_parent"
     android:background="#F5F5F5">
 
-    <!-- Organization Info Card -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cardOrgInfo"
         android:layout_width="0dp"
@@ -14,7 +13,6 @@
         app:cardElevation="4dp"
         app:cardCornerRadius="12dp"
         android:layout_margin="16dp"
-        android:padding="16dp"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -23,6 +21,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
+            android:padding="16dp"
             android:gravity="center_horizontal">
 
             <ImageView
@@ -67,7 +66,6 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Navigation Cards -->
     <androidx.cardview.widget.CardView
         android:id="@+id/cardViewInterns"
         android:layout_width="0dp"
@@ -76,7 +74,6 @@
         app:cardCornerRadius="12dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="16dp"
-        android:padding="16dp"
         app:layout_constraintTop_toBottomOf="@id/cardOrgInfo"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -85,6 +82,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="horizontal"
+            android:padding="16dp"
             android:gravity="center_vertical">
 
             <TextView
@@ -97,7 +95,6 @@
                 android:textColor="#333333"/>
 
             <TextView
-                android:id="@+id/tvChevron1"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=">"
@@ -114,7 +111,6 @@
         app:cardCornerRadius="12dp"
         android:layout_marginHorizontal="16dp"
         android:layout_marginTop="12dp"
-        android:padding="16dp"
         app:layout_constraintTop_toBottomOf="@id/cardViewInterns"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
@@ -123,6 +119,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="horizontal"
+            android:padding="16dp"
             android:gravity="center_vertical">
 
             <TextView
@@ -135,7 +132,6 @@
                 android:textColor="#333333"/>
 
             <TextView
-                android:id="@+id/tvChevron2"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text=">"
@@ -144,7 +140,6 @@
         </LinearLayout>
     </androidx.cardview.widget.CardView>
 
-    <!-- Bottom Navigation Bar -->
     <LinearLayout
         android:id="@+id/bottomNavBar"
         android:layout_width="0dp"
@@ -157,14 +152,16 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 
-        <!-- POST BUTTON -->
         <LinearLayout
             android:id="@+id/bottomPostBtn"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground">
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -178,13 +175,16 @@
                 android:textColor="#555555"/>
         </LinearLayout>
 
-        <!-- INTERNS BUTTON -->
         <LinearLayout
+            android:id="@+id/bottomInternsBtn"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground">
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"
@@ -198,13 +198,16 @@
                 android:textColor="#555555"/>
         </LinearLayout>
 
-        <!-- HISTORY BUTTON -->
         <LinearLayout
+            android:id="@+id/bottomHistoryBtn"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
             android:orientation="vertical"
-            android:gravity="center">
+            android:gravity="center"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackground">
             <ImageView
                 android:layout_width="24dp"
                 android:layout_height="24dp"

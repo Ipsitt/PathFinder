@@ -4,10 +4,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#F1F5F9"
-    android:fitsSystemWindows="true">
+    android:background="#1E3A8A">
 
-    <!-- Top bar — extends behind status bar; paddingTop set programmatically for notch -->
+    <!--
+        Root is blue (#1E3A8A) so that when content draws behind the
+        status bar, the gap above topBar is the same blue — not white.
+    -->
+
+    <!-- Top bar — inset padding applied programmatically in Activity -->
     <LinearLayout
         android:id="@+id/topBar"
         android:layout_width="match_parent"
@@ -19,7 +23,7 @@
         android:paddingTop="16dp"
         android:paddingBottom="12dp">
 
-        <!-- Title row + menu button -->
+        <!-- Title + menu button row -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
@@ -79,11 +83,12 @@
         </LinearLayout>
     </LinearLayout>
 
-    <!-- Post feed -->
+    <!-- RecyclerView sits on the light grey feed background -->
     <androidx.recyclerview.widget.RecyclerView
         android:id="@+id/rvPosts"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="#F1F5F9"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
         android:clipToPadding="false"/>

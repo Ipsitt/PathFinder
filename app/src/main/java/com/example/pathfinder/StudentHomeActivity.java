@@ -1,11 +1,10 @@
 package com.example.pathfinder;
 
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
-import android.view.MenuItem;
-import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -16,6 +15,7 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
+import androidx.core.view.WindowInsetsControllerCompat;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -35,22 +35,23 @@ public class StudentHomeActivity extends AppCompatActivity {
     DBHelper dbHelper;
     String studentEmail;
 
+    List<Post> allPosts = new ArrayList<>();
     Set<Integer> studentTagIds = new HashSet<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-
-        // Let our content draw behind the status bar so we can control the space ourselves
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView())
+                .setAppearanceLightStatusBars(false);
 
         setContentView(R.layout.activity_student_home);
 
-        rvPosts   = findViewById(R.id.rvPosts);
-        etSearch  = findViewById(R.id.etSearch);
-        btnMenu   = findViewById(R.id.btnMenu);
-        topBar    = findViewById(R.id.topBar);
-
+        rvPosts      = findViewById(R.id.rvPosts);
+        etSearch     = findViewById(R.id.etSearch);
+        btnMenu      = findViewById(R.id.btnMenu);
+        topBar       = findViewById(R.id.topBar);
         dbHelper     = new DBHelper(this);
         studentEmail = getIntent().getStringExtra("email");
 
@@ -58,32 +59,25 @@ public class StudentHomeActivity extends AppCompatActivity {
             studentTagIds.addAll(dbHelper.getStudentTagIds(studentEmail));
         }
 
-        // ── Push top bar down by the status bar height (fixes camera hole) ──
         ViewCompat.setOnApplyWindowInsetsListener(topBar, (v, insets) -> {
-            int statusBarHeight = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
-            // Add the status bar height as extra top padding on top of the existing 16dp
-            v.setPadding(
-                    v.getPaddingLeft(),
-                    statusBarHeight + (int)(16 * getResources().getDisplayMetrics().density),
-                    v.getPaddingRight(),
-                    v.getPaddingBottom());
+            int sb = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
+            v.setPadding(v.getPaddingLeft(), sb + dp(16), v.getPaddingRight(), v.getPaddingBottom());
             return insets;
         });
 
         rvPosts.setLayoutManager(new LinearLayoutManager(this));
+        allPosts = dbHelper.getAllPostsWithImages();
 
-        List<Post> ranked = getRankedPosts(null);
-        adapter = new PostAdapter(this, ranked, post ->
-                Toast.makeText(this, "Clicked: " + post.title, Toast.LENGTH_SHORT).show());
+        adapter = new PostAdapter(this, rankAndFilter(allPosts, null), studentEmail, null);
         rvPosts.setAdapter(adapter);
 
         etSearch.addTextChangedListener(new TextWatcher() {
-            @Override public void beforeTextChanged(CharSequence s, int i, int i1, int i2) {}
-            @Override public void onTextChanged(CharSequence s, int i, int i1, int i2) {}
+            @Override public void beforeTextChanged(CharSequence s, int i, int c, int a) {}
+            @Override public void onTextChanged(CharSequence s, int i, int b, int c) {}
             @Override
             public void afterTextChanged(Editable s) {
                 String q = s.toString().trim();
-                adapter.updatePosts(getRankedPosts(q.isEmpty() ? null : q));
+                adapter.updatePosts(rankAndFilter(allPosts, q.isEmpty() ? null : q));
             }
         });
 
@@ -93,78 +87,78 @@ public class StudentHomeActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
+        allPosts = dbHelper.getAllPostsWithImages();
         String q = etSearch.getText().toString().trim();
-        adapter.updatePosts(getRankedPosts(q.isEmpty() ? null : q));
+        adapter.updatePosts(rankAndFilter(allPosts, q.isEmpty() ? null : q));
     }
 
-    // ── Jaccard Similarity Recommendation ────────────────────────────────
-    //
-    //  J(student, post) = |student_tags ∩ post_tags| / |student_tags ∪ post_tags|
-    //
-    //  Posts are ranked descending by score. Posts with zero overlap still
-    //  appear at the bottom — nothing is hidden.
     // ─────────────────────────────────────────────────────────────────────
-
-    private List<Post> getRankedPosts(String searchQuery) {
-        List<Post> posts = dbHelper.getPostsWithTags(searchQuery);
-        if (studentTagIds.isEmpty()) return posts;
+    // SCORING: Composite Jaccard + Text Priority
+    // ─────────────────────────────────────────────────────────────────────
+    private List<Post> rankAndFilter(List<Post> source, String query) {
+        String q = query != null ? query.toLowerCase().trim() : null;
+        boolean hasQuery = q != null && !q.isEmpty();
 
         List<ScoredPost> scored = new ArrayList<>();
-        for (Post post : posts) {
+        for (Post post : source) {
             Set<Integer> postTagSet = new HashSet<>();
-            if (post.tags != null) {
-                for (DBHelper.Tag t : post.tags) postTagSet.add(t.id);
+            if (post.tags != null) for (DBHelper.Tag t : post.tags) postTagSet.add(t.id);
+
+            double jaccard = jaccardSimilarity(studentTagIds, postTagSet);
+            double tagScore = jaccard * 40.0;
+            boolean hasTagOverlap = jaccard > 0;
+            double queryScore = 0;
+
+            if (hasQuery) {
+                boolean titleMatch = post.title != null && post.title.toLowerCase().contains(q);
+                boolean descMatch  = post.description != null && post.description.toLowerCase().contains(q);
+                boolean tagMatch   = false;
+                if (post.tags != null)
+                    for (DBHelper.Tag t : post.tags)
+                        if (t.label != null && t.label.toLowerCase().contains(q)) { tagMatch = true; break; }
+
+                boolean effectiveTitleMatch = titleMatch || tagMatch;
+
+                if      (effectiveTitleMatch && hasTagOverlap) queryScore = 30;
+                else if (descMatch           && hasTagOverlap) queryScore = 20;
+                else if (effectiveTitleMatch)                  queryScore = 10;
+                else if (descMatch)                            queryScore = 5;
+                else continue; // no match — exclude
             }
-            scored.add(new ScoredPost(post, jaccardSimilarity(studentTagIds, postTagSet)));
+
+            scored.add(new ScoredPost(post, tagScore + queryScore));
         }
 
         Collections.sort(scored, (a, b) -> Double.compare(b.score, a.score));
-
-        List<Post> ranked = new ArrayList<>();
-        for (ScoredPost sp : scored) ranked.add(sp.post);
-        return ranked;
+        List<Post> result = new ArrayList<>();
+        for (ScoredPost sp : scored) result.add(sp.post);
+        return result;
     }
 
     private double jaccardSimilarity(Set<Integer> a, Set<Integer> b) {
         if (a.isEmpty() && b.isEmpty()) return 0.0;
-        Set<Integer> intersection = new HashSet<>(a);
-        intersection.retainAll(b);
-        Set<Integer> union = new HashSet<>(a);
-        union.addAll(b);
-        return (double) intersection.size() / union.size();
+        Set<Integer> inter = new HashSet<>(a); inter.retainAll(b);
+        Set<Integer> union = new HashSet<>(a); union.addAll(b);
+        return (double) inter.size() / union.size();
     }
 
-    private static class ScoredPost {
-        Post post; double score;
-        ScoredPost(Post p, double s) { post = p; score = s; }
-    }
-
-    // ── Popup menu ────────────────────────────────────────────────────────
+    private static class ScoredPost { Post post; double score; ScoredPost(Post p, double s) { post=p; score=s; } }
 
     private void showPopupMenu() {
         PopupMenu popup = new PopupMenu(this, btnMenu);
         popup.inflate(R.menu.menu_student_home);
-
         popup.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.menu_posts) {
-                etSearch.setText("");
-                adapter.updatePosts(getRankedPosts(null));
-                return true;
-            }
-            if (id == R.id.menu_logout) {
-                Intent intent = new Intent(this, StudentLoginActivity.class);
-                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
-                startActivity(intent);
-                return true;
-            }
+            if (id == R.id.menu_posts)    { etSearch.setText(""); adapter.updatePosts(rankAndFilter(allPosts, null)); return true; }
+            if (id == R.id.menu_logout)   { Intent i = new Intent(this, StudentLoginActivity.class); i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); startActivity(i); return true; }
             if (id == R.id.menu_profile)  Toast.makeText(this, "Profile — coming soon",  Toast.LENGTH_SHORT).show();
             if (id == R.id.menu_applied)  Toast.makeText(this, "Applied — coming soon",  Toast.LENGTH_SHORT).show();
             if (id == R.id.menu_requests) Toast.makeText(this, "Requests — coming soon", Toast.LENGTH_SHORT).show();
             if (id == R.id.menu_history)  Toast.makeText(this, "History — coming soon",  Toast.LENGTH_SHORT).show();
             return true;
         });
-
         popup.show();
     }
+
+    private int dp(int dp) { return Math.round(dp * getResources().getDisplayMetrics().density); }
 }

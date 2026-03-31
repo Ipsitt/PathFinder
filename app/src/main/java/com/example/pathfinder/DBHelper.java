@@ -12,7 +12,7 @@ import java.util.List;
 public class DBHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "PathFinder.db";
-    private static final int DB_VERSION = 7; // bumped for student profile columns
+    private static final int DB_VERSION = 8; // bumped for applications table
 
     public DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -28,7 +28,6 @@ public class DBHelper extends SQLiteOpenHelper {
                 "description TEXT," +
                 "image BLOB)");
 
-        // Students now carry full profile data
         db.execSQL("CREATE TABLE students(" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "name TEXT," +
@@ -39,7 +38,6 @@ public class DBHelper extends SQLiteOpenHelper {
                 "phone TEXT," +
                 "photo BLOB)");
 
-        // Student interest tags (many-to-many)
         db.execSQL("CREATE TABLE student_tags(" +
                 "student_email TEXT," +
                 "tag_id INTEGER," +
@@ -75,10 +73,19 @@ public class DBHelper extends SQLiteOpenHelper {
                 "PRIMARY KEY(post_id, tag_id)," +
                 "FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE," +
                 "FOREIGN KEY(tag_id) REFERENCES tags(id) ON DELETE CASCADE)");
+
+        // Applications: student signs up to a post
+        db.execSQL("CREATE TABLE applications(" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "post_id INTEGER," +
+                "student_email TEXT," +
+                "UNIQUE(post_id, student_email)," +
+                "FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE)");
     }
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldV, int newV) {
+        db.execSQL("DROP TABLE IF EXISTS applications");
         db.execSQL("DROP TABLE IF EXISTS post_tags");
         db.execSQL("DROP TABLE IF EXISTS student_tags");
         db.execSQL("DROP TABLE IF EXISTS posts");
@@ -182,10 +189,6 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
-    /**
-     * Full registration insert — name, email, hashed password, age, course, phone, photo.
-     * After inserting, call saveStudentTags() to persist the chosen interest tags.
-     */
     public boolean insertStudent(String name, String email, String password,
                                  String age, String course, String phone, byte[] photo) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -200,7 +203,6 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.insert("students", null, cv) != -1;
     }
 
-    /** Replaces all interest tags for a student */
     public void saveStudentTags(String email, List<Integer> tagIds) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete("student_tags", "student_email=?", new String[]{email});
@@ -212,7 +214,6 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
-    /** Returns list of tag IDs the student is interested in */
     public List<Integer> getStudentTagIds(String email) {
         List<Integer> ids = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
@@ -250,63 +251,93 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.delete("students", "email=?", new String[]{email}) > 0;
     }
 
+    /** Returns full student profile by email (no password) */
+    public StudentProfile getStudentProfile(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT name, email, age, course, phone, photo FROM students WHERE email=?",
+                new String[]{email});
+        if (c.moveToFirst()) {
+            StudentProfile p = new StudentProfile();
+            p.name   = c.getString(0);
+            p.email  = c.getString(1);
+            p.age    = c.getString(2);
+            p.course = c.getString(3);
+            p.phone  = c.getString(4);
+            p.photo  = c.getBlob(5);
+            c.close();
+            // Attach tags
+            p.tags = new ArrayList<>();
+            Cursor tc = db.rawQuery(
+                    "SELECT t.label, t.color FROM tags t " +
+                            "JOIN student_tags st ON t.id = st.tag_id " +
+                            "WHERE st.student_email=?", new String[]{email});
+            while (tc.moveToNext()) {
+                Tag t = new Tag();
+                t.label = tc.getString(0);
+                t.color = tc.getString(1);
+                p.tags.add(t);
+            }
+            tc.close();
+            return p;
+        }
+        c.close();
+        return null;
+    }
+
     // ── Post methods ──────────────────────────────────────────────────────
 
     public long insertPost(String title, String description, String stipend, String timePeriod,
                            String orgName, String orgEmail, List<Integer> tagIds) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
+
         cv.put("title", title);
         cv.put("description", description);
         cv.put("stipend", stipend);
         cv.put("time_period", timePeriod);
         cv.put("org_name", orgName);
-        cv.put("org_email", orgEmail);
+
+        // CRITICAL FIX: Sanitize email to ensure it matches the login email exactly
+        if (orgEmail != null) {
+            cv.put("org_email", orgEmail.trim().toLowerCase());
+        } else {
+            cv.put("org_email", "");
+        }
 
         long postId = db.insert("posts", null, cv);
+
         if (postId == -1) return -1;
 
-        int count = Math.min(tagIds.size(), 5);
-        for (int i = 0; i < count; i++) {
-            ContentValues tagCv = new ContentValues();
-            tagCv.put("post_id", postId);
-            tagCv.put("tag_id", tagIds.get(i));
-            db.insertWithOnConflict("post_tags", null, tagCv, SQLiteDatabase.CONFLICT_IGNORE);
+        // Insert associated tags (limit to 5)
+        if (tagIds != null) {
+            int count = Math.min(tagIds.size(), 5);
+            for (int i = 0; i < count; i++) {
+                ContentValues tagCv = new ContentValues();
+                tagCv.put("post_id", postId);
+                tagCv.put("tag_id", tagIds.get(i));
+                db.insertWithOnConflict("post_tags", null, tagCv, SQLiteDatabase.CONFLICT_IGNORE);
+            }
         }
+
         return postId;
     }
 
     /**
-     * Returns all posts fully loaded (tags + org image), optionally filtered by search query.
-     * Ranking by tag overlap is handled in StudentHomeActivity via the scoring algorithm.
+     * Single JOIN query — fetches all posts + org image in one cursor.
+     * Tags distributed via SparseArray in a second single query.
      */
-    public List<Post> getPostsWithTags(String searchQuery) {
+    public List<Post> getAllPostsWithImages() {
         SQLiteDatabase db = this.getReadableDatabase();
         List<Post> posts = new ArrayList<>();
 
-        String postSql;
-        String[] postArgs;
+        Cursor pc = db.rawQuery(
+                "SELECT p.id, p.title, p.description, p.stipend, p.time_period, " +
+                        "p.org_name, p.org_email, o.image " +
+                        "FROM posts p " +
+                        "LEFT JOIN organizations o ON o.email = p.org_email " +
+                        "ORDER BY p.id DESC", null);
 
-        if (searchQuery != null && !searchQuery.trim().isEmpty()) {
-            String q = "%" + searchQuery.trim().toLowerCase() + "%";
-            postSql = "SELECT DISTINCT p.id, p.title, p.description, p.stipend, " +
-                    "p.time_period, p.org_name, p.org_email " +
-                    "FROM posts p " +
-                    "LEFT JOIN post_tags pt ON p.id = pt.post_id " +
-                    "LEFT JOIN tags t ON pt.tag_id = t.id " +
-                    "WHERE LOWER(p.title) LIKE ? " +
-                    "   OR LOWER(p.org_name) LIKE ? " +
-                    "   OR LOWER(p.description) LIKE ? " +
-                    "   OR LOWER(t.label) LIKE ? " +
-                    "ORDER BY p.id DESC";
-            postArgs = new String[]{q, q, q, q};
-        } else {
-            postSql = "SELECT id, title, description, stipend, time_period, org_name, org_email " +
-                    "FROM posts ORDER BY id DESC";
-            postArgs = null;
-        }
-
-        Cursor pc = db.rawQuery(postSql, postArgs);
         while (pc.moveToNext()) {
             Post post = new Post();
             post.id          = pc.getInt(0);
@@ -316,33 +347,105 @@ public class DBHelper extends SQLiteOpenHelper {
             post.timePeriod  = pc.getString(4);
             post.orgName     = pc.getString(5);
             post.orgEmail    = pc.getString(6);
+            post.orgImage    = pc.getBlob(7);
+            post.tags        = new ArrayList<>();
             posts.add(post);
         }
         pc.close();
 
-        for (Post post : posts) {
-            post.tags = new ArrayList<>();
-            Cursor tc = db.rawQuery(
-                    "SELECT t.id, t.label, t.color FROM tags t " +
-                            "JOIN post_tags pt ON t.id = pt.tag_id WHERE pt.post_id=?",
-                    new String[]{String.valueOf(post.id)});
-            while (tc.moveToNext()) {
+        if (posts.isEmpty()) return posts;
+
+        android.util.SparseArray<Post> postMap = new android.util.SparseArray<>();
+        for (Post p : posts) postMap.put(p.id, p);
+
+        Cursor tc = db.rawQuery(
+                "SELECT pt.post_id, t.id, t.label, t.color " +
+                        "FROM post_tags pt JOIN tags t ON t.id = pt.tag_id", null);
+        while (tc.moveToNext()) {
+            Post p = postMap.get(tc.getInt(0));
+            if (p != null) {
                 Tag tag = new Tag();
-                tag.id    = tc.getInt(0);
-                tag.label = tc.getString(1);
-                tag.color = tc.getString(2);
-                post.tags.add(tag);
+                tag.id    = tc.getInt(1);
+                tag.label = tc.getString(2);
+                tag.color = tc.getString(3);
+                p.tags.add(tag);
             }
-            tc.close();
-
-            Cursor ic = db.rawQuery(
-                    "SELECT image FROM organizations WHERE email=?",
-                    new String[]{post.orgEmail});
-            if (ic.moveToFirst()) post.orgImage = ic.getBlob(0);
-            ic.close();
         }
-
+        tc.close();
         return posts;
+    }
+
+    public List<OrgPost> getPostsForOrg(String orgEmail) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        List<OrgPost> list = new ArrayList<>();
+
+        if (orgEmail == null) return list;
+
+        // 1. Clean the input variable
+        String cleanEmail = orgEmail.trim().toLowerCase();
+
+        // 2. Use SQL functions LOWER and TRIM on the column itself
+        String query = "SELECT id, title, " +
+                "(SELECT COUNT(*) FROM applications WHERE post_id = posts.id) " +
+                "FROM posts " +
+                "WHERE LOWER(TRIM(org_email)) = ? " +
+                "ORDER BY id DESC";
+
+        Cursor c = db.rawQuery(query, new String[]{cleanEmail});
+
+        while (c.moveToNext()) {
+            OrgPost op = new OrgPost();
+            op.postId         = c.getInt(0);
+            op.title          = c.getString(1);
+            op.applicantCount = c.getInt(2);
+            list.add(op);
+        }
+        c.close();
+        return list;
+    }
+    // Add this to DBHelper.java
+    public int getGlobalPostCount() {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery("SELECT COUNT(*) FROM posts", null);
+        c.moveToFirst();
+        int count = c.getInt(0);
+        c.close();
+        return count;
+    }
+
+    /** Returns list of student emails who applied to a specific post */
+    public List<String> getApplicantEmails(int postId) {
+        List<String> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT student_email FROM applications WHERE post_id=?",
+                new String[]{String.valueOf(postId)});
+        while (c.moveToNext()) list.add(c.getString(0));
+        c.close();
+        return list;
+    }
+
+    // ── Application methods ───────────────────────────────────────────────
+
+    /** Returns true if student has already applied to this post */
+    public boolean hasApplied(int postId, String studentEmail) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT 1 FROM applications WHERE post_id=? AND student_email=?",
+                new String[]{String.valueOf(postId), studentEmail});
+        boolean applied = c.getCount() > 0;
+        c.close();
+        return applied;
+    }
+
+    /** Submits an application. Returns false if already applied. */
+    public boolean applyToPost(int postId, String studentEmail) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("post_id", postId);
+        cv.put("student_email", studentEmail);
+        return db.insertWithOnConflict("applications", null, cv,
+                SQLiteDatabase.CONFLICT_IGNORE) != -1;
     }
 
     // ── Tag methods ───────────────────────────────────────────────────────
@@ -403,5 +506,17 @@ public class DBHelper extends SQLiteOpenHelper {
             if (o == null || getClass() != o.getClass()) return false;
             return id == ((Tag) o).id;
         }
+    }
+
+    public static class StudentProfile {
+        public String name, email, age, course, phone;
+        public byte[] photo;
+        public List<Tag> tags;
+    }
+
+    public static class OrgPost {
+        public int postId;
+        public String title;
+        public int applicantCount;
     }
 }

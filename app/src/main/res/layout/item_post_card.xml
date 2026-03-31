@@ -30,20 +30,22 @@
             android:layout_marginBottom="10dp">
 
             <!--
-                Org photo: NO padding, NO src placeholder here.
-                The adapter sets the bitmap or fallback icon programmatically.
-                outlineProvider + clipToOutline gives clean rounded corners.
+                Use a FrameLayout so we can stack the ImageView inside a
+                clipped container — avoids the outlineProvider/clipToOutline
+                issues that caused blank images on some API levels.
             -->
-            <ImageView
-                android:id="@+id/imgOrgPhoto"
+            <FrameLayout
                 android:layout_width="46dp"
                 android:layout_height="46dp"
-                android:scaleType="centerCrop"
-                android:background="@drawable/org_photo_bg"
-                android:outlineProvider="background"
-                android:clipToOutline="true"/>
+                android:background="@drawable/org_photo_bg">
 
-            <!-- Title + org name -->
+                <ImageView
+                    android:id="@+id/imgOrgPhoto"
+                    android:layout_width="46dp"
+                    android:layout_height="46dp"
+                    android:scaleType="centerCrop"/>
+            </FrameLayout>
+
             <LinearLayout
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"

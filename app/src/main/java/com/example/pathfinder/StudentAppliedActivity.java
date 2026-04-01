@@ -46,6 +46,10 @@ public class StudentAppliedActivity extends AppCompatActivity {
         dbHelper     = new DBHelper(this);
         studentEmail = getIntent().getStringExtra("email");
 
+        if (studentEmail != null) {
+            dbHelper.markStudentRecruitmentsSeen(studentEmail);
+        }
+
         // Push top bar below status bar — same pattern as StudentHomeActivity
         ViewCompat.setOnApplyWindowInsetsListener(topBar, (v, insets) -> {
             int sb = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;

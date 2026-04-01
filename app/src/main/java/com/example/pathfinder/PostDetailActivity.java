@@ -159,15 +159,23 @@ public class PostDetailActivity extends AppCompatActivity {
     }
 
     private void updateSignUpButton(Post post) {
-        if (studentEmail != null && dbHelper.hasApplied(post.id, studentEmail)) {
-            btnSignUp.setText("Signed Up ✓");
+        boolean isRecruited = dbHelper.isRecruited(post.id, studentEmail);
+        boolean hasApplied = dbHelper.hasApplied(post.id, studentEmail);
+
+        if (isRecruited) {
+            btnSignUp.setText("Accepted ✓ (No Un-signup)");
+            btnSignUp.setBackgroundTintList(
+                    android.content.res.ColorStateList.valueOf(getColor(R.color.status_success)));
+            btnSignUp.setEnabled(false);
+        } else if (studentEmail != null && hasApplied) {
+            btnSignUp.setText("Signed Up ✓ (Un-signup)");
             btnSignUp.setBackgroundTintList(
                     android.content.res.ColorStateList.valueOf(getColor(R.color.primary_bg)));
             btnSignUp.setEnabled(true);
         } else {
             btnSignUp.setText("Sign Up");
             btnSignUp.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(getColor(R.color.status_warning)));
+                    android.content.res.ColorStateList.valueOf(getColor(R.color.primary_accent)));
             btnSignUp.setEnabled(true);
         }
     }

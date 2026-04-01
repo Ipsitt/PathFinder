@@ -48,6 +48,10 @@ public class StudentRequestsActivity extends AppCompatActivity {
         dbHelper     = new DBHelper(this);
         studentEmail = getIntent().getStringExtra("email");
 
+        if (studentEmail != null) {
+            dbHelper.markStudentRequestsSeen(studentEmail);
+        }
+
         findViewById(R.id.btnBack).setOnClickListener(v -> finish());
     }
 

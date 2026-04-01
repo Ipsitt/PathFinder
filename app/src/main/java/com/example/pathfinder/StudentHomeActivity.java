@@ -5,6 +5,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.View;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -90,6 +91,15 @@ public class StudentHomeActivity extends AppCompatActivity {
         allPosts = dbHelper.getAllPostsWithImages();
         String q = etSearch.getText().toString().trim();
         adapter.updatePosts(rankAndFilter(allPosts, q.isEmpty() ? null : q));
+
+        checkNotifications();
+    }
+
+    private void checkNotifications() {
+        View dot = findViewById(R.id.dotStudentMenu);
+        if (dot != null) {
+            dot.setVisibility(dbHelper.hasUnseenStudentUpdates(studentEmail) ? View.VISIBLE : View.GONE);
+        }
     }
 
     // ─────────────────────────────────────────────────────────────────────
@@ -147,6 +157,18 @@ public class StudentHomeActivity extends AppCompatActivity {
     private void showPopupMenu() {
         PopupMenu popup = new PopupMenu(this, btnMenu);
         popup.inflate(R.menu.menu_student_home);
+
+        // Dynamic "New" indicators in menu
+        android.view.Menu menu = popup.getMenu();
+        if (dbHelper.hasUnseenStudentRecruitments(studentEmail)) {
+            android.view.MenuItem appliedItem = menu.findItem(R.id.menu_applied);
+            if (appliedItem != null) appliedItem.setTitle("Applied (New ✨)");
+        }
+        if (dbHelper.hasUnseenStudentRequests(studentEmail)) {
+            android.view.MenuItem requestsItem = menu.findItem(R.id.menu_requests);
+            if (requestsItem != null) requestsItem.setTitle("Requests (New 🔔)");
+        }
+
         popup.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
             if (id == R.id.menu_posts)    { etSearch.setText(""); adapter.updatePosts(rankAndFilter(allPosts, null)); return true; }

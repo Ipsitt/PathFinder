@@ -50,10 +50,11 @@ public class OrganizationRegisterActivity extends AppCompatActivity {
 
                 if (success) {
                     Toast.makeText(OrganizationRegisterActivity.this,
-                            "Registration successful! Please log in.", Toast.LENGTH_SHORT).show();
-                    // Go back to login
-                    Intent intent = new Intent(OrganizationRegisterActivity.this, OrganizationLoginActivity.class);
-                    intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                            "Registration successful! Welcome.", Toast.LENGTH_SHORT).show();
+                    // Go directly to home
+                    Intent intent = new Intent(OrganizationRegisterActivity.this, OrganizationHomeActivity.class);
+                    intent.putExtra("email", email);
+                    intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                     startActivity(intent);
                     finish();
                 } else {

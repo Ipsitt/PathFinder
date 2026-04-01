@@ -63,7 +63,37 @@ public class OrgRequestsActivity extends AppCompatActivity {
             return;
         }
 
+        dbHelper.markOrgUpdatesSeen(orgEmail);
+        initBottomNav();
         loadRequests();
+    }
+
+    private void initBottomNav() {
+        findViewById(R.id.bottomHomeBtn).setOnClickListener(v -> {
+            android.content.Intent intent = new android.content.Intent(this, OrganizationHomeActivity.class);
+            intent.putExtra("email", orgEmail);
+            intent.setFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            startActivity(intent);
+        });
+
+        findViewById(R.id.bottomPostBtn).setOnClickListener(v -> {
+            android.content.Intent intent = new android.content.Intent(this, PostActivity.class);
+            intent.putExtra("email", orgEmail);
+            startActivity(intent);
+        });
+
+        // Current tab is Interns (Requests) - already there, but refresh
+        findViewById(R.id.bottomInternsBtn).setOnClickListener(v -> loadRequests());
+
+        findViewById(R.id.bottomHistoryBtn).setOnClickListener(v -> {
+            android.content.Intent intent = new android.content.Intent(this, OrganizationHistoryActivity.class);
+            intent.putExtra("email", orgEmail);
+            startActivity(intent);
+        });
+
+        // Hide dot since we just marked seen
+        View dot = findViewById(R.id.dotOrgRequests);
+        if (dot != null) dot.setVisibility(View.GONE);
     }
 
     private void loadRequests() {

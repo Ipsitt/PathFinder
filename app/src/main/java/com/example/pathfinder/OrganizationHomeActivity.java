@@ -156,12 +156,26 @@ public class OrganizationHomeActivity extends AppCompatActivity {
             intent.putExtra("email", orgEmail);
             startActivity(intent);
         });
+
+        loadStudentList();
     }
 
     @Override
     protected void onResume() {
         super.onResume();
         loadStudentList();
+        checkNotifications();
+    }
+
+    private void checkNotifications() {
+        View dot = findViewById(R.id.dotOrgRequests);
+        if (dot != null) {
+            if (dbHelper.hasUnseenOrgUpdates(orgEmail)) {
+                dot.setVisibility(View.VISIBLE);
+            } else {
+                dot.setVisibility(View.GONE);
+            }
+        }
     }
 
     private void loadOrgData() {

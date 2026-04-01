@@ -12,7 +12,7 @@ import java.util.List;
 public class DBHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "PathFinder.db";
-    private static final int DB_VERSION = 13; // bumped for posts is_completed column
+    private static final int DB_VERSION = 14; // added admins table and is_seen columns
 
     public DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -80,6 +80,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
                 "post_id INTEGER," +
                 "student_email TEXT," +
+                "is_seen INTEGER DEFAULT 0," +
                 "UNIQUE(post_id, student_email)," +
                 "FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE)");
 
@@ -90,6 +91,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "student_email TEXT," +
                 "org_email TEXT," +
                 "certificate BLOB," +
+                "is_seen INTEGER DEFAULT 0," +
                 "UNIQUE(post_id, student_email)," +
                 "FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE)");
 
@@ -102,7 +104,20 @@ public class DBHelper extends SQLiteOpenHelper {
                 "org_name TEXT," +
                 "post_title TEXT," +
                 "status TEXT DEFAULT 'Pending'," +
+                "is_seen INTEGER DEFAULT 0," +
                 "FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE)");
+
+        // ── Admin Table ───────────────────────────────────────────────────────
+        db.execSQL("CREATE TABLE admins(" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "email TEXT UNIQUE," +
+                "password TEXT)");
+
+        // Seed admin
+        ContentValues adminCv = new ContentValues();
+        adminCv.put("email", "admin");
+        adminCv.put("password", hashPassword("admin"));
+        db.insert("admins", null, adminCv);
 
         // ── Seed: Demo Organization ───────────────────────────────────────────
         ContentValues seedOrg = new ContentValues();
@@ -177,6 +192,22 @@ public class DBHelper extends SQLiteOpenHelper {
             db.execSQL("DROP TABLE IF EXISTS recruit_requests");
             db.execSQL("ALTER TABLE recruit_requests_new RENAME TO recruit_requests");
         }
+        if (oldV < 14) {
+            // Add is_seen columns
+            try { db.execSQL("ALTER TABLE applications ADD COLUMN is_seen INTEGER DEFAULT 0"); } catch (Exception ignored) {}
+            try { db.execSQL("ALTER TABLE recruitments ADD COLUMN is_seen INTEGER DEFAULT 0"); } catch (Exception ignored) {}
+            try { db.execSQL("ALTER TABLE recruit_requests ADD COLUMN is_seen INTEGER DEFAULT 0"); } catch (Exception ignored) {}
+
+            // Create admin table
+            db.execSQL("CREATE TABLE IF NOT EXISTS admins(" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "email TEXT UNIQUE," +
+                    "password TEXT)");
+            ContentValues adminCv = new ContentValues();
+            adminCv.put("email", "admin");
+            adminCv.put("password", hashPassword("admin"));
+            db.insertWithOnConflict("admins", null, adminCv, SQLiteDatabase.CONFLICT_IGNORE);
+        }
 
         if (oldV < 9) {
             db.execSQL("DROP TABLE IF EXISTS recruitments");
@@ -204,6 +235,73 @@ public class DBHelper extends SQLiteOpenHelper {
             e.printStackTrace();
             return password;
         }
+    }
+
+    // ── Admin methods ─────────────────────────────────────────────────────
+
+    public boolean checkAdminLogin(String email, String password) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.query("admins", null, "email=? AND password=?",
+                new String[]{email, hashPassword(password)}, null, null, null);
+        boolean ok = c.moveToFirst();
+        c.close();
+        return ok;
+    }
+
+    // ── Update Notification methods ────────────────────────────────────────
+
+    public boolean hasUnseenStudentUpdates(String email) {
+        return hasUnseenStudentRequests(email) || hasUnseenStudentRecruitments(email);
+    }
+
+    public boolean hasUnseenStudentRequests(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery("SELECT 1 FROM recruit_requests WHERE student_email=? AND is_seen=0 AND status='Pending'", new String[]{email});
+        boolean exists = c.getCount() > 0;
+        c.close();
+        return exists;
+    }
+
+    public boolean hasUnseenStudentRecruitments(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery("SELECT 1 FROM recruitments WHERE student_email=? AND is_seen=0", new String[]{email});
+        boolean exists = c.getCount() > 0;
+        c.close();
+        return exists;
+    }
+
+    public boolean hasUnseenOrgUpdates(String email) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        // Check for unseen applications on any of this org's posts
+        Cursor c = db.rawQuery(
+                "SELECT 1 FROM applications a " +
+                "JOIN posts p ON a.post_id = p.id " +
+                "WHERE p.org_email=? AND a.is_seen=0", new String[]{email});
+        boolean unseen = c.getCount() > 0;
+        c.close();
+        return unseen;
+    }
+
+    public void markStudentRequestsSeen(String email) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("is_seen", 1);
+        db.update("recruit_requests", cv, "student_email=?", new String[]{email});
+    }
+
+    public void markStudentRecruitmentsSeen(String email) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("is_seen", 1);
+        db.update("recruitments", cv, "student_email=?", new String[]{email});
+    }
+
+    public void markOrgUpdatesSeen(String email) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("is_seen", 1);
+        // Mark all applications for this org's posts as seen
+        db.execSQL("UPDATE applications SET is_seen=1 WHERE post_id IN (SELECT id FROM posts WHERE org_email=?)", new String[]{email});
     }
 
     // ── Organization methods ──────────────────────────────────────────────

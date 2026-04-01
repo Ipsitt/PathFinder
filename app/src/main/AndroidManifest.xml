@@ -29,6 +29,7 @@
         <activity android:name=".StudentHistoryActivity" />
         <activity android:name=".OrganizationHistoryActivity" />
         <activity android:name=".OrgHistoryInternsActivity" />
+        <activity android:name=".StudentRequestsActivity" />
 
         <activity
             android:name=".MainActivity"

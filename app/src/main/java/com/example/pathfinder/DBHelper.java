@@ -12,7 +12,7 @@ import java.util.List;
 public class DBHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "PathFinder.db";
-    private static final int DB_VERSION = 11; // bumped for posts is_completed column
+    private static final int DB_VERSION = 13; // bumped for posts is_completed column
 
     public DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -93,6 +93,17 @@ public class DBHelper extends SQLiteOpenHelper {
                 "UNIQUE(post_id, student_email)," +
                 "FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE)");
 
+        // Recruit requests: org sends a request to a student for a specific post
+        db.execSQL("CREATE TABLE IF NOT EXISTS recruit_requests(" +
+                "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                "post_id INTEGER," +
+                "student_email TEXT," +
+                "org_email TEXT," +
+                "org_name TEXT," +
+                "post_title TEXT," +
+                "status TEXT DEFAULT 'Pending'," +
+                "FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE)");
+
         // ── Seed: Demo Organization ───────────────────────────────────────────
         ContentValues seedOrg = new ContentValues();
         seedOrg.put("name",        "OG Media");
@@ -143,12 +154,30 @@ public class DBHelper extends SQLiteOpenHelper {
 
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldV, int newV) {
+
         if (oldV == 9 && newV >= 10) {
             db.execSQL("ALTER TABLE recruitments ADD COLUMN certificate BLOB");
         }
         if (oldV >= 9 && oldV < 11 && newV >= 11) {
             db.execSQL("ALTER TABLE posts ADD COLUMN is_completed INTEGER DEFAULT 0");
         }
+        // In onUpgrade, add before the oldV < 9 block:
+        if (oldV < 13) {
+            // Drop the unique constraint by recreating the table without it
+            db.execSQL("CREATE TABLE IF NOT EXISTS recruit_requests_new(" +
+                    "id INTEGER PRIMARY KEY AUTOINCREMENT," +
+                    "post_id INTEGER," +
+                    "student_email TEXT," +
+                    "org_email TEXT," +
+                    "org_name TEXT," +
+                    "post_title TEXT," +
+                    "status TEXT DEFAULT 'Pending'," +
+                    "FOREIGN KEY(post_id) REFERENCES posts(id) ON DELETE CASCADE)");
+            db.execSQL("INSERT INTO recruit_requests_new SELECT * FROM recruit_requests");
+            db.execSQL("DROP TABLE IF EXISTS recruit_requests");
+            db.execSQL("ALTER TABLE recruit_requests_new RENAME TO recruit_requests");
+        }
+
         if (oldV < 9) {
             db.execSQL("DROP TABLE IF EXISTS recruitments");
             db.execSQL("DROP TABLE IF EXISTS applications");
@@ -615,9 +644,13 @@ public class DBHelper extends SQLiteOpenHelper {
     public List<String> getApplicantEmails(int postId) {
         List<String> list = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
+        // Include both self-applicants and recruit-request accepted students
         Cursor c = db.rawQuery(
-                "SELECT student_email FROM applications WHERE post_id=?",
-                new String[]{String.valueOf(postId)});
+                "SELECT student_email FROM applications WHERE post_id=? " +
+                        "UNION " +
+                        "SELECT student_email FROM recruit_requests " +
+                        "WHERE post_id=? AND status='Accepted'",
+                new String[]{String.valueOf(postId), String.valueOf(postId)});
         while (c.moveToNext()) list.add(c.getString(0));
         c.close();
         return list;
@@ -627,9 +660,13 @@ public class DBHelper extends SQLiteOpenHelper {
     public List<String> getRecruitedStudentsForPost(int postId) {
         List<String> list = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
+        // Union: directly recruited + accepted via recruit request
         Cursor c = db.rawQuery(
-                "SELECT student_email FROM recruitments WHERE post_id=?",
-                new String[]{String.valueOf(postId)});
+                "SELECT student_email FROM recruitments WHERE post_id=? " +
+                        "UNION " +
+                        "SELECT student_email FROM recruit_requests " +
+                        "WHERE post_id=? AND status='Accepted'",
+                new String[]{String.valueOf(postId), String.valueOf(postId)});
         while (c.moveToNext()) list.add(c.getString(0));
         c.close();
         return list;
@@ -641,6 +678,180 @@ public class DBHelper extends SQLiteOpenHelper {
         cv.put("certificate", certificateBytes);
         return db.update("recruitments", cv, "post_id=? AND student_email=?",
                 new String[]{String.valueOf(postId), studentEmail}) > 0;
+    }
+    // ── Recruit Request methods ───────────────────────────────────────────
+
+    /** Sends a recruit request from org to student. Returns false if already sent. */
+    // FIND the entire sendRecruitRequest method and REPLACE WITH:
+    public boolean sendRecruitRequest(int postId, String studentEmail,
+                                      String orgEmail, String orgName, String postTitle) {
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // If a pending request already exists for this post+student, reset it
+        Cursor c = db.rawQuery(
+                "SELECT id FROM recruit_requests " +
+                        "WHERE post_id=? AND student_email=? AND status='Pending'",
+                new String[]{String.valueOf(postId), studentEmail});
+        boolean pendingExists = c.getCount() > 0;
+        c.close();
+
+        if (pendingExists) {
+            // Already a pending one — no need to send again
+            return false;
+        }
+
+        // Insert a fresh request regardless of prior accepted/rejected ones
+        ContentValues cv = new ContentValues();
+        cv.put("post_id",       postId);
+        cv.put("student_email", studentEmail);
+        cv.put("org_email",     orgEmail);
+        cv.put("org_name",      orgName);
+        cv.put("post_title",    postTitle);
+        cv.put("status",        "Pending");
+        return db.insert("recruit_requests", null, cv) != -1;
+    }
+
+    /** Returns all pending/responded requests for a student */
+    public List<RecruitRequest> getRecruitRequestsForStudent(String studentEmail) {
+        List<RecruitRequest> list = new ArrayList<>();
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT id, post_id, org_email, org_name, post_title, status " +
+                        "FROM recruit_requests WHERE student_email=? AND status='Pending' ORDER BY id DESC",
+                new String[]{studentEmail});
+        while (c.moveToNext()) {
+            RecruitRequest r = new RecruitRequest();
+            r.id           = c.getInt(0);
+            r.postId       = c.getInt(1);
+            r.orgEmail     = c.getString(2);
+            r.orgName      = c.getString(3);
+            r.postTitle    = c.getString(4);
+            r.status       = c.getString(5);
+            r.studentEmail = studentEmail;
+            list.add(r);
+        }
+        c.close();
+        return list;
+    }
+
+    /** Student accepts or rejects a request. If accepted, also inserts into recruitments. */
+    public boolean respondToRecruitRequest(int requestId, int postId,
+                                           String studentEmail, String orgEmail,
+                                           String status) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        ContentValues cv = new ContentValues();
+        cv.put("status", status);
+        boolean updated = db.update("recruit_requests", cv,
+                "id=?", new String[]{String.valueOf(requestId)}) > 0;
+
+        if (updated && "Accepted".equals(status)) {
+            recruitStudent(postId, studentEmail, orgEmail);
+        }
+        return updated;
+    }
+
+    public boolean hasRecruitRequest(int postId, String studentEmail) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT 1 FROM recruit_requests WHERE post_id=? AND student_email=? AND status='Pending'",
+                new String[]{String.valueOf(postId), studentEmail});
+        boolean exists = c.getCount() > 0;
+        c.close();
+        return exists;
+    }
+
+    /** Returns all students ranked by TF-weighted Jaccard against org's active post tags */
+    public List<RankedStudent> getRankedStudentsForOrg(String orgEmail) {
+        SQLiteDatabase db = this.getReadableDatabase();
+
+        // Step 1: Build tag frequency map across all active posts for this org
+        android.util.SparseIntArray tagFreq = new android.util.SparseIntArray();
+        Cursor tc = db.rawQuery(
+                "SELECT pt.tag_id FROM post_tags pt " +
+                        "JOIN posts p ON p.id = pt.post_id " +
+                        "WHERE LOWER(TRIM(p.org_email)) = ? " +
+                        "AND (p.is_completed IS NULL OR p.is_completed = 0)",
+                new String[]{orgEmail.trim().toLowerCase()});
+        while (tc.moveToNext()) {
+            int tagId = tc.getInt(0);
+            tagFreq.put(tagId, tagFreq.get(tagId, 0) + 1);
+        }
+        tc.close();
+
+        // Step 2: Get all students with their tags
+        List<RankedStudent> ranked = new ArrayList<>();
+        Cursor sc = db.rawQuery(
+                "SELECT s.name, s.email, s.age, s.course, s.phone, s.photo " +
+                        "FROM students s", null);
+
+        while (sc.moveToNext()) {
+            RankedStudent rs = new RankedStudent();
+            rs.profile        = new StudentProfile();
+            rs.profile.name   = sc.getString(0);
+            rs.profile.email  = sc.getString(1);
+            rs.profile.age    = sc.getString(2);
+            rs.profile.course = sc.getString(3);
+            rs.profile.phone  = sc.getString(4);
+            rs.profile.photo  = sc.getBlob(5);
+            rs.profile.tags   = new ArrayList<>();
+
+            // Load tags for this student
+            Cursor stc = db.rawQuery(
+                    "SELECT t.id, t.label, t.color FROM tags t " +
+                            "JOIN student_tags st ON t.id = st.tag_id " +
+                            "WHERE st.student_email=?",
+                    new String[]{rs.profile.email});
+            while (stc.moveToNext()) {
+                Tag t = new Tag();
+                t.id    = stc.getInt(0);
+                t.label = stc.getString(1);
+                t.color = stc.getString(2);
+                rs.profile.tags.add(t);
+            }
+            stc.close();
+
+            // Step 3: Compute TF-weighted Jaccard
+            rs.score = computeTFWeightedJaccard(rs.profile.tags, tagFreq);
+            ranked.add(rs);
+        }
+        sc.close();
+
+        // Step 4: Sort descending by score
+        java.util.Collections.sort(ranked,
+                (a, b) -> Double.compare(b.score, a.score));
+        return ranked;
+    }
+
+    private double computeTFWeightedJaccard(List<Tag> studentTags,
+                                            android.util.SparseIntArray tagFreq) {
+        if (tagFreq.size() == 0 || studentTags == null || studentTags.isEmpty()) return 0.0;
+
+        // Build student tag id set
+        java.util.Set<Integer> studentSet = new java.util.HashSet<>();
+        for (Tag t : studentTags) studentSet.add(t.id);
+
+        // Build org tag id set (all keys in tagFreq)
+        java.util.Set<Integer> orgSet = new java.util.HashSet<>();
+        for (int i = 0; i < tagFreq.size(); i++) orgSet.add(tagFreq.keyAt(i));
+
+        // Weighted intersection: sum of freq for tags in both sets
+        double weightedIntersection = 0;
+        for (int id : studentSet) {
+            if (orgSet.contains(id)) {
+                weightedIntersection += tagFreq.get(id, 0);
+            }
+        }
+
+        // Weighted union: sum of freq for all org tags + 1 per student-only tag
+        double weightedUnion = 0;
+        for (int i = 0; i < tagFreq.size(); i++) {
+            weightedUnion += tagFreq.valueAt(i);
+        }
+        for (int id : studentSet) {
+            if (!orgSet.contains(id)) weightedUnion += 1;
+        }
+
+        return weightedUnion == 0 ? 0.0 : weightedIntersection / weightedUnion;
     }
 
     public byte[] getRecruitmentCertificate(int postId, String studentEmail) {
@@ -690,15 +901,21 @@ public class DBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         List<Post> posts = new ArrayList<>();
 
+        // Union: self-applied posts + recruit-request accepted posts
+        // Both must be active (not completed)
         Cursor pc = db.rawQuery(
                 "SELECT p.id, p.title, p.description, p.stipend, p.time_period, " +
                         "p.org_name, p.org_email, o.image " +
-                        "FROM applications a " +
-                        "JOIN posts p ON p.id = a.post_id " +
+                        "FROM posts p " +
                         "LEFT JOIN organizations o ON o.email = p.org_email " +
-                        "WHERE a.student_email = ? AND (p.is_completed IS NULL OR p.is_completed = 0) " +
-                        "ORDER BY a.id DESC",
-                new String[]{studentEmail});
+                        "WHERE (p.is_completed IS NULL OR p.is_completed = 0) " +
+                        "AND p.id IN (" +
+                        "  SELECT post_id FROM applications WHERE student_email = ? " +
+                        "  UNION " +
+                        "  SELECT post_id FROM recruit_requests " +
+                        "  WHERE student_email = ? AND status = 'Accepted'" +
+                        ") ORDER BY p.id DESC",
+                new String[]{studentEmail, studentEmail});
 
         while (pc.moveToNext()) {
             Post post = new Post();
@@ -717,16 +934,19 @@ public class DBHelper extends SQLiteOpenHelper {
 
         if (posts.isEmpty()) return posts;
 
-        // Load tags for each applied post
         android.util.SparseArray<Post> postMap = new android.util.SparseArray<>();
         for (Post p : posts) postMap.put(p.id, p);
 
         Cursor tc = db.rawQuery(
                 "SELECT pt.post_id, t.id, t.label, t.color " +
                         "FROM post_tags pt JOIN tags t ON t.id = pt.tag_id " +
-                        "WHERE pt.post_id IN " +
-                        "(SELECT post_id FROM applications WHERE student_email = ?)",
-                new String[]{studentEmail});
+                        "WHERE pt.post_id IN (" +
+                        "  SELECT post_id FROM applications WHERE student_email = ? " +
+                        "  UNION " +
+                        "  SELECT post_id FROM recruit_requests " +
+                        "  WHERE student_email = ? AND status = 'Accepted'" +
+                        ")",
+                new String[]{studentEmail, studentEmail});
 
         while (tc.moveToNext()) {
             Post p = postMap.get(tc.getInt(0));
@@ -880,5 +1100,20 @@ public class DBHelper extends SQLiteOpenHelper {
     public static class RecruitmentEntry {
         public int postId;
         public String orgEmail;
+    }
+
+    public static class RecruitRequest {
+        public int    id;
+        public int    postId;
+        public String studentEmail;
+        public String orgEmail;
+        public String orgName;
+        public String postTitle;
+        public String status; // "Pending", "Accepted", "Rejected"
+    }
+
+    public static class RankedStudent {
+        public StudentProfile profile;
+        public double         score;
     }
 }

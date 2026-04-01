@@ -130,7 +130,7 @@ public class AdminTagsFragment extends Fragment {
         gd.setShape(GradientDrawable.RECTANGLE);
         gd.setCornerRadius(12f);
         gd.setColor(color);
-        gd.setStroke(2, Color.parseColor("#CCCCCC"));
+        gd.setStroke(2, requireContext().getColor(R.color.divider));
         colorPreview.setBackground(gd);
     }
 

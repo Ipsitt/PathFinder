@@ -134,13 +134,13 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         TextView tvTitle = new TextView(this);
         tvTitle.setText(postTitle != null ? postTitle : "Post ID: " + postId);
         tvTitle.setTextSize(18f);
-        tvTitle.setTextColor(Color.parseColor("#1E293B"));
+        tvTitle.setTextColor(getColor(R.color.text_primary));
         tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         headerInner.addView(tvTitle);
         
         TextView tvCount = new TextView(this);
         tvCount.setText(recruitedEmails.size() + (recruitedEmails.size() == 1 ? " intern hired" : " interns hired"));
-        tvCount.setTextColor(Color.parseColor("#166534"));
+        tvCount.setTextColor(getColor(R.color.status_success));
         tvCount.setTextSize(14f);
         tvCount.setPadding(0, dp(4), 0, dp(4));
         headerInner.addView(tvCount);
@@ -150,7 +150,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         if (recruitedEmails.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText("No interns recruited yet.");
-            empty.setTextColor(Color.parseColor("#64748B"));
+            empty.setTextColor(getColor(R.color.text_secondary));
             empty.setTextSize(16f);
             empty.setGravity(Gravity.CENTER);
             empty.setPadding(dp(20), dp(40), dp(20), 0);
@@ -198,7 +198,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         avatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
         GradientDrawable circle = new GradientDrawable();
         circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(Color.parseColor("#DBEAFE"));
+        circle.setColor(getColor(R.color.primary_accent_light));
         avatar.setBackground(circle);
         avatar.setClipToOutline(true);
         if (profile != null && profile.photo != null && profile.photo.length > 0) {
@@ -217,13 +217,13 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         TextView tvName = new TextView(this);
         tvName.setText(name);
         tvName.setTextSize(14f);
-        tvName.setTextColor(Color.parseColor("#1E293B"));
+        tvName.setTextColor(getColor(R.color.text_primary));
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
         textBlock.addView(tvName);
         TextView tvEmail = new TextView(this);
         tvEmail.setText(studentEmail);
         tvEmail.setTextSize(12f);
-        tvEmail.setTextColor(Color.parseColor("#64748B"));
+        tvEmail.setTextColor(getColor(R.color.text_secondary));
         textBlock.addView(tvEmail);
         hRow.addView(textBlock);
         
@@ -244,7 +244,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         btnProfile.setAllCaps(false);
         btnProfile.setTextColor(Color.WHITE);
         btnProfile.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(Color.parseColor("#1E3A8A"))); // Dark blue
+                android.content.res.ColorStateList.valueOf(getColor(R.color.primary_bg))); // Dark blue
         btnProfile.setOnClickListener(v -> showStudentProfile(profile));
         btnRow.addView(btnProfile);
 
@@ -258,7 +258,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         btnCertificate.setAllCaps(false);
         btnCertificate.setTextColor(Color.WHITE);
         btnCertificate.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(Color.parseColor("#047857"))); // Emerald Green
+                android.content.res.ColorStateList.valueOf(getColor(R.color.status_success))); // Emerald Green
         btnCertificate.setOnClickListener(v -> handleCertificateClick(studentEmail));
         btnRow.addView(btnCertificate);
 
@@ -269,7 +269,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         LinearLayout.LayoutParams divLp = new LinearLayout.LayoutParams(-1, 1);
         divLp.topMargin = dp(8);
         divider.setLayoutParams(divLp);
-        divider.setBackgroundColor(Color.parseColor("#F1F5F9"));
+        divider.setBackgroundColor(getColor(R.color.divider));
         row.addView(divider);
 
         return row;
@@ -381,7 +381,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
                 chip.setPadding(dp(12), dp(5), dp(12), dp(5));
                 int tagColor;
                 try { tagColor = Color.parseColor(tag.color); }
-                catch (Exception e) { tagColor = Color.parseColor("#94A3B8"); }
+                catch (Exception e) { tagColor = getColor(R.color.text_secondary); }
                 GradientDrawable gd = new GradientDrawable();
                 gd.setShape(GradientDrawable.RECTANGLE);
                 gd.setCornerRadius(dp(20));
@@ -389,7 +389,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
                 chip.setBackground(gd);
                 double lum = (0.299 * Color.red(tagColor) + 0.587 * Color.green(tagColor)
                         + 0.114 * Color.blue(tagColor)) / 255;
-                chip.setTextColor(lum < 0.55 ? Color.WHITE : Color.parseColor("#1E293B"));
+                chip.setTextColor(lum < 0.55 ? Color.WHITE : getColor(R.color.text_primary));
                 tagsLayout.addView(chip);
             }
         }

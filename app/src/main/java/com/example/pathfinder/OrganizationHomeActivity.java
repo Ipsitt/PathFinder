@@ -234,7 +234,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         if (students.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText("No students found.");
-            empty.setTextColor(Color.parseColor("#94A3B8"));
+            empty.setTextColor(getColor(R.color.text_secondary));
             empty.setTextSize(14f);
             empty.setGravity(Gravity.CENTER);
             empty.setPadding(0, dp(24), 0, dp(24));
@@ -256,7 +256,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         card.setLayoutParams(cardLp);
         card.setRadius(dp(12));
         card.setCardElevation(dp(3));
-        card.setCardBackgroundColor(Color.WHITE);
+        card.setCardBackgroundColor(getColor(R.color.surface_card));
 
         LinearLayout inner = new LinearLayout(this);
         inner.setOrientation(LinearLayout.VERTICAL);
@@ -277,7 +277,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         avatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
         GradientDrawable circle = new GradientDrawable();
         circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(Color.parseColor("#DBEAFE"));
+        circle.setColor(getColor(R.color.primary_accent_light));
         avatar.setBackground(circle);
         avatar.setClipToOutline(true);
         if (profile.photo != null && profile.photo.length > 0) {
@@ -295,14 +295,14 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         TextView tvName = new TextView(this);
         tvName.setText(profile.name != null ? profile.name : "Unknown");
         tvName.setTextSize(15f);
-        tvName.setTextColor(Color.parseColor("#1E293B"));
+        tvName.setTextColor(getColor(R.color.text_primary));
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
         nameBlock.addView(tvName);
 
         TextView tvCourse = new TextView(this);
         tvCourse.setText(profile.course != null ? profile.course : "");
         tvCourse.setTextSize(12f);
-        tvCourse.setTextColor(Color.parseColor("#64748B"));
+        tvCourse.setTextColor(getColor(R.color.text_secondary));
         nameBlock.addView(tvCourse);
 
         // Match score badge
@@ -311,9 +311,9 @@ public class OrganizationHomeActivity extends AppCompatActivity {
             int matchPct = (int) Math.round(rs.score * 100);
             tvScore.setText(matchPct + "% match");
             tvScore.setTextSize(11f);
-            tvScore.setTextColor(Color.parseColor("#166534"));
+            tvScore.setTextColor(getColor(R.color.status_success));
             GradientDrawable scoreBg = new GradientDrawable();
-            scoreBg.setColor(Color.parseColor("#DCFCE7"));
+            scoreBg.setColor(getColor(R.color.status_success_light));
             scoreBg.setCornerRadius(dp(20));
             tvScore.setBackground(scoreBg);
             tvScore.setPadding(dp(8), dp(3), dp(8), dp(3));
@@ -330,7 +330,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         divLp.topMargin = dp(10);
         divLp.bottomMargin = dp(10);
         divider.setLayoutParams(divLp);
-        divider.setBackgroundColor(Color.parseColor("#F1F5F9"));
+        divider.setBackgroundColor(getColor(R.color.divider));
         inner.addView(divider);
 
         // ── Tag chips ────────────────────────────────────────────────────────
@@ -358,11 +358,11 @@ public class OrganizationHomeActivity extends AppCompatActivity {
                 chip.setPadding(dp(8), dp(3), dp(8), dp(3));
                 int tagColor;
                 try { tagColor = Color.parseColor(tag.color); }
-                catch (Exception e) { tagColor = Color.parseColor("#94A3B8"); }
+                catch (Exception e) { tagColor = getColor(R.color.text_secondary); }
                 double lum = (0.299 * Color.red(tagColor) + 0.587 * Color.green(tagColor)
                         + 0.114 * Color.blue(tagColor)) / 255;
                 chip.setTextColor(lum < 0.55 ? Color.WHITE
-                        : Color.parseColor("#1E293B"));
+                        : getColor(R.color.text_primary));
                 GradientDrawable gd = new GradientDrawable();
                 gd.setShape(GradientDrawable.RECTANGLE);
                 gd.setCornerRadius(99f);
@@ -438,14 +438,14 @@ public class OrganizationHomeActivity extends AppCompatActivity {
             row.setLayoutParams(rowLp);
             row.setPadding(dp(12), dp(10), dp(12), dp(10));
             GradientDrawable rowBg = new GradientDrawable();
-            rowBg.setColor(Color.parseColor("#F8FAFC"));
+            rowBg.setColor(getColor(R.color.surface_alt));
             rowBg.setCornerRadius(dp(8));
             row.setBackground(rowBg);
 
             TextView tvPost = new TextView(this);
             tvPost.setText(op.title);
             tvPost.setTextSize(14f);
-            tvPost.setTextColor(Color.parseColor("#1E293B"));
+            tvPost.setTextColor(getColor(R.color.text_primary));
             tvPost.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
             row.addView(tvPost);
 
@@ -462,19 +462,19 @@ public class OrganizationHomeActivity extends AppCompatActivity {
                 btnSend.setText("Recruited ✓");
                 btnSend.setBackgroundTintList(
                         android.content.res.ColorStateList.valueOf(
-                                Color.parseColor("#9CA3AF")));
+                                 getColor(R.color.text_secondary)));
                 btnSend.setEnabled(false);
             } else if (alreadySent) {
                 btnSend.setText("Sent ✓");
                 btnSend.setBackgroundTintList(
                         android.content.res.ColorStateList.valueOf(
-                                Color.parseColor("#D97706")));
+                                         getColor(R.color.status_warning)));
                 btnSend.setEnabled(false);
             } else {
                 btnSend.setText("Send");
                 btnSend.setBackgroundTintList(
                         android.content.res.ColorStateList.valueOf(
-                                Color.parseColor("#1E3A8A")));
+                                 getColor(R.color.primary_bg)));
                 final String finalOrgName = orgName;
                 final DBHelper.OrgPost finalOp = op;
                 btnSend.setOnClickListener(v -> {
@@ -485,7 +485,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
                         btnSend.setText("Sent ✓");
                         btnSend.setBackgroundTintList(
                                 android.content.res.ColorStateList.valueOf(
-                                        Color.parseColor("#D97706")));
+                                        getColor(R.color.status_warning)));
                         btnSend.setEnabled(false);
                         Toast.makeText(this,
                                 "Request sent to " + profile.name,

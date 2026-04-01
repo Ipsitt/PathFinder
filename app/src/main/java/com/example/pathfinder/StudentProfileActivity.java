@@ -166,7 +166,7 @@ public class StudentProfileActivity extends AppCompatActivity {
                 }
                 tvTagCount.setText(selectedTagIds.size() + " / 5 selected");
                 tvTagCount.setTextColor(selectedTagIds.size() == MAX_TAGS
-                        ? Color.parseColor("#16A34A") : Color.parseColor("#2563EB"));
+                        ? getColor(R.color.status_success) : getColor(R.color.secondary_accent));
             });
 
             tagFlexbox.addView(chip);
@@ -175,7 +175,7 @@ public class StudentProfileActivity extends AppCompatActivity {
         // Sync counter with pre-loaded selections
         tvTagCount.setText(selectedTagIds.size() + " / 5 selected");
         tvTagCount.setTextColor(selectedTagIds.size() == MAX_TAGS
-                ? Color.parseColor("#16A34A") : Color.parseColor("#2563EB"));
+                ? getColor(R.color.status_success) : getColor(R.color.secondary_accent));
     }
 
     private void applyChipStyle(TextView chip, DBHelper.Tag tag, boolean selected) {
@@ -184,14 +184,14 @@ public class StudentProfileActivity extends AppCompatActivity {
         gd.setCornerRadius(dp(32));
         int tagColor;
         try { tagColor = Color.parseColor(tag.color); }
-        catch (Exception e) { tagColor = Color.parseColor("#94A3B8"); }
+        catch (Exception e) { tagColor = getColor(R.color.text_secondary); }
 
         if (selected) {
             gd.setColor(tagColor);
             gd.setStroke(0, Color.TRANSPARENT);
-            chip.setTextColor(isColorDark(tagColor) ? Color.WHITE : Color.parseColor("#1E293B"));
+            chip.setTextColor(isColorDark(tagColor) ? Color.WHITE : getColor(R.color.text_primary));
         } else {
-            gd.setColor(Color.parseColor("#F1F5F9"));
+            gd.setColor(getColor(R.color.surface_alt));
             gd.setStroke(dp(2), tagColor);
             chip.setTextColor(tagColor);
         }

@@ -162,12 +162,12 @@ public class PostDetailActivity extends AppCompatActivity {
         if (studentEmail != null && dbHelper.hasApplied(post.id, studentEmail)) {
             btnSignUp.setText("Signed Up ✓");
             btnSignUp.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(Color.parseColor("#16A34A")));
+                    android.content.res.ColorStateList.valueOf(getColor(R.color.primary_bg)));
             btnSignUp.setEnabled(true);
         } else {
             btnSignUp.setText("Sign Up");
             btnSignUp.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(Color.parseColor("#F59E0B")));
+                    android.content.res.ColorStateList.valueOf(getColor(R.color.status_warning)));
             btnSignUp.setEnabled(true);
         }
     }
@@ -188,9 +188,9 @@ public class PostDetailActivity extends AppCompatActivity {
 
         int bgColor;
         try { bgColor = Color.parseColor(tag.color); }
-        catch (Exception e) { bgColor = Color.parseColor("#94A3B8"); }
+        catch (Exception e) { bgColor = getColor(R.color.text_secondary); }
 
-        chip.setTextColor(isColorDark(bgColor) ? Color.WHITE : Color.parseColor("#1E293B"));
+        chip.setTextColor(isColorDark(bgColor) ? Color.WHITE : getColor(R.color.text_primary));
         GradientDrawable gd = new GradientDrawable();
         gd.setShape(GradientDrawable.RECTANGLE);
         gd.setCornerRadius(99f);

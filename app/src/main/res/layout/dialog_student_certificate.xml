@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     app:cardCornerRadius="16dp"
     app:cardElevation="8dp"
-    app:cardBackgroundColor="#FFFFFF"
+    app:cardBackgroundColor="@color/surface_card"
     android:layout_margin="16dp">
 
     <LinearLayout
@@ -22,7 +22,7 @@
             android:text="Internship Certificate"
             android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="#0F172A"
+            android:textColor="@color/text_primary"
             android:layout_marginBottom="16dp"/>
 
         <ImageView
@@ -33,7 +33,7 @@
             android:minHeight="200dp"
             android:maxHeight="400dp"
             android:scaleType="centerInside"
-            android:background="#F1F5F9"
+            android:background="@color/surface_alt"
             android:layout_marginBottom="16dp"/>
 
         <Button
@@ -41,8 +41,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Download Certificate"
-            android:textColor="#FFFFFF"
-            android:backgroundTint="#3B82F6"/>
+            android:textColor="@color/white"
+            android:backgroundTint="@color/primary_accent"/>
 
         <Button
             android:id="@+id/dialogBtnClose"
@@ -50,8 +50,8 @@
             android:layout_height="wrap_content"
             android:text="Close"
             android:layout_marginTop="8dp"
-            android:textColor="#475569"
-            android:backgroundTint="#E2E8F0"/>
+            android:textColor="@color/text_secondary"
+            android:backgroundTint="@color/divider"/>
 
     </LinearLayout>
 </androidx.cardview.widget.CardView>

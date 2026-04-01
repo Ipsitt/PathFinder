@@ -2,4 +2,37 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Core Palette -->
+    <color name="primary_bg">#1E3A8A</color>
+    <color name="secondary_bg">#1E40AF</color>
+    <color name="surface_card">#FFFFFF</color>
+    <color name="surface_alt">#F1F5F9</color>
+
+    <!-- Accent & Interactive -->
+    <color name="primary_accent">#3B82F6</color>
+    <color name="secondary_accent">#2563EB</color>
+    <color name="cta_highlight">#60A5FA</color>
+
+    <!-- Text Colors -->
+    <color name="text_primary">#0F172A</color>
+    <color name="text_secondary">#475569</color>
+    <color name="text_dark_primary">#E2E8F0</color>
+    <color name="text_dark_muted">#94A3B8</color>
+
+    <!-- Status Colors -->
+    <color name="status_success">#22C55E</color>
+    <color name="status_success_light">#F0FDF4</color>
+    <color name="status_warning">#F59E0B</color>
+    <color name="status_warning_light">#FFFBEB</color>
+    <color name="status_error">#EF4444</color>
+    <color name="status_error_light">#FEF2F2</color>
+    <color name="status_info">#38BDF8</color>
+    <color name="status_info_light">#F0F9FF</color>
+    <color name="primary_accent_light">#EEF2FF</color>
+
+    <!-- Extras -->
+    <color name="divider">#E2E8F0</color>
+    <color name="shadow_tint">#1A000000</color>
+    <color name="overlay">#990F172A</color>
 </resources>

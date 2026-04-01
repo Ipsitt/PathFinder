@@ -73,7 +73,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
         if (posts.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText("No posts found for:\n" + orgEmail);
-            empty.setTextColor(Color.parseColor("#64748B"));
+            empty.setTextColor(getColor(R.color.text_secondary));
             empty.setTextSize(16f);
             empty.setGravity(Gravity.CENTER);
             empty.setPadding(dp(20), dp(100), dp(20), 0);
@@ -102,18 +102,18 @@ public class OrgRequestsActivity extends AppCompatActivity {
         TextView tvTitle = new TextView(this);
         tvTitle.setText(op.title);
         tvTitle.setTextSize(18f);
-        tvTitle.setTextColor(Color.parseColor("#1E293B"));
+        tvTitle.setTextColor(getColor(R.color.text_primary));
         tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
         inner.addView(tvTitle);
 
         TextView tvCount = new TextView(this);
         tvCount.setText(op.applicantCount + (op.applicantCount == 1 ? " applicant" : " applicants"));
-        tvCount.setTextColor(Color.parseColor("#1E40AF"));
+        tvCount.setTextColor(getColor(R.color.secondary_bg));
         tvCount.setTextSize(12f);
         tvCount.setPadding(dp(10), dp(4), dp(10), dp(4));
 
         GradientDrawable bg = new GradientDrawable();
-        bg.setColor(Color.parseColor("#DBEAFE"));
+        bg.setColor(getColor(R.color.primary_accent_light));
         bg.setCornerRadius(dp(20));
         tvCount.setBackground(bg);
 
@@ -154,7 +154,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
         avatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
         GradientDrawable circle = new GradientDrawable();
         circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(Color.parseColor("#DBEAFE"));
+        circle.setColor(getColor(R.color.primary_accent_light));
         avatar.setBackground(circle);
         avatar.setClipToOutline(true);
         if (profile != null && profile.photo != null && profile.photo.length > 0) {
@@ -173,13 +173,13 @@ public class OrgRequestsActivity extends AppCompatActivity {
         TextView tvName = new TextView(this);
         tvName.setText(name);
         tvName.setTextSize(14f);
-        tvName.setTextColor(Color.parseColor("#1E293B"));
+        tvName.setTextColor(getColor(R.color.text_primary));
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
         textBlock.addView(tvName);
         TextView tvEmail = new TextView(this);
         tvEmail.setText(studentEmail);
         tvEmail.setTextSize(12f);
-        tvEmail.setTextColor(Color.parseColor("#64748B"));
+        tvEmail.setTextColor(getColor(R.color.text_secondary));
         textBlock.addView(tvEmail);
         hRow.addView(textBlock);
 
@@ -193,7 +193,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
         btnProfile.setAllCaps(false);
         btnProfile.setTextColor(Color.WHITE);
         btnProfile.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(Color.parseColor("#1E3A8A")));
+                android.content.res.ColorStateList.valueOf(getColor(R.color.primary_bg)));
         btnProfile.setOnClickListener(v -> showStudentProfile(profile, studentEmail, postId));
         hRow.addView(btnProfile);
 
@@ -202,7 +202,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
         LinearLayout.LayoutParams divLp = new LinearLayout.LayoutParams(-1, 1);
         divLp.topMargin = dp(6);
         divider.setLayoutParams(divLp);
-        divider.setBackgroundColor(Color.parseColor("#F1F5F9"));
+        divider.setBackgroundColor(getColor(R.color.divider));
         row.addView(divider);
 
         return row;
@@ -259,7 +259,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
                 chip.setPadding(dp(12), dp(5), dp(12), dp(5));
                 int tagColor;
                 try { tagColor = Color.parseColor(tag.color); }
-                catch (Exception e) { tagColor = Color.parseColor("#94A3B8"); }
+                catch (Exception e) { tagColor = getColor(R.color.text_secondary); }
                 GradientDrawable gd = new GradientDrawable();
                 gd.setShape(GradientDrawable.RECTANGLE);
                 gd.setCornerRadius(dp(20));
@@ -267,7 +267,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
                 chip.setBackground(gd);
                 double lum = (0.299 * Color.red(tagColor) + 0.587 * Color.green(tagColor)
                         + 0.114 * Color.blue(tagColor)) / 255;
-                chip.setTextColor(lum < 0.55 ? Color.WHITE : Color.parseColor("#1E293B"));
+                chip.setTextColor(lum < 0.55 ? Color.WHITE : getColor(R.color.text_primary));
                 tagsLayout.addView(chip);
             }
         }
@@ -289,7 +289,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
                 if (success) {
                     btnRecruit.setText("Recruited ✓");
                     btnRecruit.setBackgroundTintList(
-                            android.content.res.ColorStateList.valueOf(Color.parseColor("#9CA3AF")));
+                            android.content.res.ColorStateList.valueOf(getColor(R.color.text_secondary)));
                     btnRecruit.setEnabled(false);
                     Toast.makeText(this, profile.name + " has been recruited!", Toast.LENGTH_SHORT).show();
                 } else {

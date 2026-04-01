@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F8FAFC">
+    android:background="@color/surface_alt">
 
     <!-- Top Bar -->
     <LinearLayout
@@ -14,7 +14,7 @@
         android:orientation="horizontal"
         android:padding="16dp"
         android:gravity="center_vertical"
-        android:background="#FFFFFF"
+        android:background="@color/surface_card"
         android:elevation="4dp"
         app:layout_constraintTop_toTopOf="parent">
 
@@ -23,7 +23,7 @@
             android:layout_width="28dp"
             android:layout_height="28dp"
             android:src="@android:drawable/ic_menu_revert"
-            app:tint="#64748B"
+            app:tint="@color/text_secondary"
             android:layout_marginEnd="12dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"/>
@@ -35,7 +35,7 @@
             android:text="Edit Post"
             android:textSize="22sp"
             android:textStyle="bold"
-            android:textColor="#0F172A"/>
+            android:textColor="@color/text_primary"/>
 
     </LinearLayout>
 
@@ -59,8 +59,8 @@
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusBottomEnd="12dp"
-                app:boxStrokeColor="#1E90FF"
-                app:boxBackgroundColor="#FFFFFF">
+                app:boxStrokeColor="@color/primary_accent"
+                app:boxBackgroundColor="@color/surface_card">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etEditTitle"
                     android:layout_width="match_parent"
@@ -76,8 +76,8 @@
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusBottomEnd="12dp"
-                app:boxStrokeColor="#1E90FF"
-                app:boxBackgroundColor="#FFFFFF">
+                app:boxStrokeColor="@color/primary_accent"
+                app:boxBackgroundColor="@color/surface_card">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etEditDescription"
                     android:layout_width="match_parent"
@@ -100,7 +100,7 @@
                 android:layout_height="48dp"
                 android:spinnerMode="dropdown"
                 android:layout_marginTop="4dp"
-                android:background="#FFFFFF"/>
+                android:background="@color/surface_card"/>
 
             <TextView
                 android:id="@+id/tvEditSelectedTags"
@@ -109,7 +109,7 @@
                 android:text="Selected Tags: None"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
-                android:textColor="#333333" />
+                android:textColor="@color/text_primary" />
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
@@ -119,8 +119,8 @@
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusBottomEnd="12dp"
-                app:boxStrokeColor="#1E90FF"
-                app:boxBackgroundColor="#FFFFFF">
+                app:boxStrokeColor="@color/primary_accent"
+                app:boxBackgroundColor="@color/surface_card">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etEditStipend"
                     android:layout_width="match_parent"
@@ -137,8 +137,8 @@
                 app:boxCornerRadiusTopEnd="12dp"
                 app:boxCornerRadiusBottomStart="12dp"
                 app:boxCornerRadiusBottomEnd="12dp"
-                app:boxStrokeColor="#1E90FF"
-                app:boxBackgroundColor="#FFFFFF">
+                app:boxStrokeColor="@color/primary_accent"
+                app:boxBackgroundColor="@color/surface_card">
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/etEditTimePeriod"
                     android:layout_width="match_parent"
@@ -152,8 +152,8 @@
                 android:layout_height="56dp"
                 android:text="Update Internship"
                 android:layout_marginTop="24dp"
-                android:backgroundTint="#1E90FF"
-                android:textColor="#FFFFFF"
+                android:backgroundTint="@color/primary_accent"
+                android:textColor="@color/white"
                 app:cornerRadius="12dp"/>
         </LinearLayout>
     </ScrollView>

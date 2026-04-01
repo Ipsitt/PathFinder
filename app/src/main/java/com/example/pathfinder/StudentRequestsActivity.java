@@ -65,7 +65,7 @@ public class StudentRequestsActivity extends AppCompatActivity {
         if (requests.isEmpty()) {
             TextView empty = new TextView(this);
             empty.setText("No recruit requests yet.");
-            empty.setTextColor(Color.parseColor("#94A3B8"));
+            empty.setTextColor(getColor(R.color.text_secondary));
             empty.setTextSize(15f);
             empty.setGravity(Gravity.CENTER);
             empty.setPadding(0, dp(60), 0, 0);
@@ -85,7 +85,7 @@ public class StudentRequestsActivity extends AppCompatActivity {
         card.setLayoutParams(cardLp);
         card.setRadius(dp(12));
         card.setCardElevation(dp(3));
-        card.setCardBackgroundColor(Color.WHITE);
+        card.setCardBackgroundColor(getColor(R.color.surface_card));
 
         LinearLayout inner = new LinearLayout(this);
         inner.setOrientation(LinearLayout.VERTICAL);
@@ -96,7 +96,7 @@ public class StudentRequestsActivity extends AppCompatActivity {
         TextView tvOrg = new TextView(this);
         tvOrg.setText(req.orgName);
         tvOrg.setTextSize(13f);
-        tvOrg.setTextColor(Color.parseColor("#2563EB"));
+        tvOrg.setTextColor(getColor(R.color.secondary_accent));
         tvOrg.setTypeface(null, android.graphics.Typeface.BOLD);
         inner.addView(tvOrg);
 
@@ -104,7 +104,7 @@ public class StudentRequestsActivity extends AppCompatActivity {
         TextView tvPost = new TextView(this);
         tvPost.setText(req.postTitle);
         tvPost.setTextSize(16f);
-        tvPost.setTextColor(Color.parseColor("#1E293B"));
+        tvPost.setTextColor(getColor(R.color.text_primary));
         tvPost.setTypeface(null, android.graphics.Typeface.BOLD);
         LinearLayout.LayoutParams postLp = new LinearLayout.LayoutParams(-1, -2);
         postLp.topMargin = dp(2);
@@ -121,16 +121,16 @@ public class StudentRequestsActivity extends AppCompatActivity {
         statusBg.setCornerRadius(dp(20));
         switch (req.status) {
             case "Accepted":
-                statusBg.setColor(Color.parseColor("#DCFCE7"));
-                tvStatus.setTextColor(Color.parseColor("#166534"));
+                statusBg.setColor(getColor(R.color.status_success_light));
+                tvStatus.setTextColor(getColor(R.color.status_success));
                 break;
             case "Rejected":
-                statusBg.setColor(Color.parseColor("#FEE2E2"));
-                tvStatus.setTextColor(Color.parseColor("#991B1B"));
+                statusBg.setColor(getColor(R.color.status_error_light));
+                tvStatus.setTextColor(getColor(R.color.status_error));
                 break;
             default:
-                statusBg.setColor(Color.parseColor("#FEF3C7"));
-                tvStatus.setTextColor(Color.parseColor("#92400E"));
+                statusBg.setColor(getColor(R.color.status_warning_light));
+                tvStatus.setTextColor(getColor(R.color.status_warning));
                 break;
         }
         tvStatus.setBackground(statusBg);
@@ -151,10 +151,10 @@ public class StudentRequestsActivity extends AppCompatActivity {
             btnAccept.setLayoutParams(acceptLp);
             btnAccept.setText("Accept");
             btnAccept.setAllCaps(false);
-            btnAccept.setTextColor(Color.WHITE);
+            btnAccept.setTextColor(getColor(R.color.white));
             btnAccept.setBackgroundTintList(
                     android.content.res.ColorStateList.valueOf(
-                            Color.parseColor("#16A34A")));
+                            getColor(R.color.status_success)));
             btnAccept.setOnClickListener(v -> {
                 boolean ok = dbHelper.respondToRecruitRequest(
                         req.id, req.postId, studentEmail,
@@ -171,10 +171,10 @@ public class StudentRequestsActivity extends AppCompatActivity {
             btnReject.setLayoutParams(rejectLp);
             btnReject.setText("Reject");
             btnReject.setAllCaps(false);
-            btnReject.setTextColor(Color.WHITE);
+            btnReject.setTextColor(getColor(R.color.white));
             btnReject.setBackgroundTintList(
                     android.content.res.ColorStateList.valueOf(
-                            Color.parseColor("#DC2626")));
+                            getColor(R.color.status_error)));
             btnReject.setOnClickListener(v -> {
                 boolean ok = dbHelper.respondToRecruitRequest(
                         req.id, req.postId, studentEmail,

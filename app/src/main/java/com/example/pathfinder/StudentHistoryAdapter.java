@@ -94,13 +94,13 @@ public class StudentHistoryAdapter extends RecyclerView.Adapter<StudentHistoryAd
                     holder.imgCertificate.setImageBitmap(bmp);
                     holder.btnDownload.setText("Download Certificate");
                     holder.btnDownload.setEnabled(true);
-                    holder.btnDownload.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#3B82F6")));
+                    holder.btnDownload.setBackgroundTintList(android.content.res.ColorStateList.valueOf(context.getColor(R.color.primary_accent)));
                     holder.btnDownload.setOnClickListener(v -> downloadListener.onDownload(bmp, post.title));
                 } else {
                     holder.imgCertificate.setImageResource(android.R.drawable.ic_dialog_info);
                     holder.btnDownload.setText("No Certificate Available");
                     holder.btnDownload.setEnabled(false);
-                    holder.btnDownload.setBackgroundTintList(android.content.res.ColorStateList.valueOf(Color.parseColor("#94A3B8")));
+                    holder.btnDownload.setBackgroundTintList(android.content.res.ColorStateList.valueOf(context.getColor(R.color.text_secondary)));
                 }
             });
         });

@@ -35,7 +35,7 @@ public class AdminActivity extends AppCompatActivity {
     int activeTab = 0;
 
     // Tags screen state
-    String selectedTagColor = "#4CAF50";
+    String selectedTagColor = "#3B82F6"; // Default to primary accent
     View colorPreviewBox;
 
     @Override
@@ -46,7 +46,7 @@ public class AdminActivity extends AppCompatActivity {
         // Root
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
-        root.setBackgroundColor(Color.parseColor("#F5F5F5"));
+        root.setBackgroundColor(getColor(R.color.surface_alt));
         root.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
@@ -56,7 +56,7 @@ public class AdminActivity extends AppCompatActivity {
         titleBar.setTextSize(18f);
         titleBar.setTextColor(Color.WHITE);
         titleBar.setTypeface(null, Typeface.BOLD);
-        titleBar.setBackgroundColor(Color.parseColor("#1E3A8A"));
+        titleBar.setBackgroundColor(getColor(R.color.primary_bg));
         titleBar.setGravity(Gravity.CENTER);
         titleBar.setPadding(dp(16), dp(14), dp(16), dp(14));
         root.addView(titleBar, new LinearLayout.LayoutParams(
@@ -161,7 +161,7 @@ public class AdminActivity extends AppCompatActivity {
         addGap(layout, 24);
 
         // ── Save button ─────────────────────────────────────
-        Button btnSave = styledButton("Save Tag", "#1E3A8A");
+        Button btnSave = styledButton("Save Tag", getColor(R.color.primary_bg));
         btnSave.setOnClickListener(v -> {
             String label = etLabel.getText().toString().trim();
             if (label.isEmpty()) {
@@ -194,7 +194,7 @@ public class AdminActivity extends AppCompatActivity {
             TextView tv = new TextView(this);
             tv.setText(t.label);
             tv.setTextSize(14f);
-            tv.setTextColor(Color.parseColor("#222222"));
+            tv.setTextColor(getColor(R.color.text_primary));
             tv.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 2f));
             row.addView(tv);
 
@@ -205,7 +205,7 @@ public class AdminActivity extends AppCompatActivity {
             colorLp.setMargins(dp(6), 0, dp(6), 0);
             row.addView(colorBox, colorLp);
 
-            Button btnDel = smallButton("Delete", "#E53935");
+            Button btnDel = smallButton("Delete", getColor(R.color.status_error));
             btnDel.setOnClickListener(v -> new AlertDialog.Builder(this)
                     .setTitle("Delete Tag")
                     .setMessage("Delete tag: " + t.label + "?")
@@ -273,13 +273,13 @@ public class AdminActivity extends AppCompatActivity {
         // Thin bottom border
         GradientDrawable border = new GradientDrawable();
         border.setColor(Color.WHITE);
-        border.setStroke(dp(1), Color.parseColor("#E0E0E0"));
+        border.setStroke(dp(1), getColor(R.color.divider));
         row.setBackground(border);
 
         TextView tvEmail = new TextView(this);
         tvEmail.setText(email);
         tvEmail.setTextSize(12.5f);
-        tvEmail.setTextColor(Color.parseColor("#222222"));
+        tvEmail.setTextColor(getColor(R.color.text_primary));
         tvEmail.setPadding(dp(4), 0, dp(4), 0);
         row.addView(tvEmail, new LinearLayout.LayoutParams(0,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 2f));
@@ -288,7 +288,7 @@ public class AdminActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         bp.setMargins(dp(4), 0, dp(4), 0);
 
-        Button btnLogin = smallButton("Login", "#1E88E5");
+        Button btnLogin = smallButton("Login", getColor(R.color.primary_accent));
         btnLogin.setOnClickListener(v -> {
             Intent i = new Intent(this, OrganizationHomeActivity.class);
             i.putExtra("email", email);
@@ -296,7 +296,7 @@ public class AdminActivity extends AppCompatActivity {
         });
         row.addView(btnLogin, bp);
 
-        Button btnDel = smallButton("Delete", "#E53935");
+        Button btnDel = smallButton("Delete", getColor(R.color.status_error));
         btnDel.setOnClickListener(v ->
                 new AlertDialog.Builder(this)
                         .setTitle("Delete Organization")
@@ -349,13 +349,13 @@ public class AdminActivity extends AppCompatActivity {
 
         GradientDrawable border = new GradientDrawable();
         border.setColor(Color.WHITE);
-        border.setStroke(dp(1), Color.parseColor("#E0E0E0"));
+        border.setStroke(dp(1), getColor(R.color.divider));
         row.setBackground(border);
 
         TextView tvEmail = new TextView(this);
         tvEmail.setText(email);
         tvEmail.setTextSize(12.5f);
-        tvEmail.setTextColor(Color.parseColor("#222222"));
+        tvEmail.setTextColor(getColor(R.color.text_primary));
         tvEmail.setPadding(dp(4), 0, dp(4), 0);
         row.addView(tvEmail, new LinearLayout.LayoutParams(0,
                 ViewGroup.LayoutParams.WRAP_CONTENT, 2f));
@@ -364,7 +364,7 @@ public class AdminActivity extends AppCompatActivity {
                 ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
         bp.setMargins(dp(4), 0, dp(4), 0);
 
-        Button btnLogin = smallButton("Login", "#1E88E5");
+        Button btnLogin = smallButton("Login", getColor(R.color.primary_accent));
         btnLogin.setOnClickListener(v -> {
             Intent i = new Intent(this, StudentHomeActivity.class);
             i.putExtra("email", email);
@@ -372,7 +372,7 @@ public class AdminActivity extends AppCompatActivity {
         });
         row.addView(btnLogin, bp);
 
-        Button btnDel = smallButton("Delete", "#E53935");
+        Button btnDel = smallButton("Delete", getColor(R.color.status_error));
         btnDel.setOnClickListener(v ->
                 new AlertDialog.Builder(this)
                         .setTitle("Delete User")
@@ -397,7 +397,7 @@ public class AdminActivity extends AppCompatActivity {
         LinearLayout bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
         bar.setGravity(Gravity.CENTER);
-        bar.setBackgroundColor(Color.WHITE);
+        bar.setBackgroundColor(getColor(R.color.surface_card));
         bar.setElevation(dp(8));
 
         navTags  = navItem("\uD83C\uDFF7", "Tags",  () -> showTab(0));
@@ -436,8 +436,8 @@ public class AdminActivity extends AppCompatActivity {
     }
 
     void updateNavHighlight() {
-        int active   = Color.parseColor("#1E3A8A");
-        int inactive = Color.parseColor("#888888");
+        int active   = getColor(R.color.primary_bg);
+        int inactive = getColor(R.color.text_secondary);
         tintNav(navTags,  activeTab == 0 ? active : inactive);
         tintNav(navOrgs,  activeTab == 1 ? active : inactive);
         tintNav(navUsers, activeTab == 2 ? active : inactive);
@@ -457,7 +457,7 @@ public class AdminActivity extends AppCompatActivity {
     View tableHeader() {
         LinearLayout h = new LinearLayout(this);
         h.setOrientation(LinearLayout.HORIZONTAL);
-        h.setBackgroundColor(Color.parseColor("#1E3A8A"));
+        h.setBackgroundColor(getColor(R.color.primary_bg));
         h.setPadding(dp(6), dp(10), dp(6), dp(10));
         String[] cols = {"Email", "Login", "Delete"};
         float[] wts   = {2f, 1f, 1f};
@@ -477,7 +477,7 @@ public class AdminActivity extends AppCompatActivity {
     TextView emptyMessage(String msg) {
         TextView tv = new TextView(this);
         tv.setText(msg);
-        tv.setTextColor(Color.parseColor("#888888"));
+        tv.setTextColor(getColor(R.color.text_secondary));
         tv.setPadding(dp(8), dp(16), dp(8), dp(8));
         return tv;
     }
@@ -486,26 +486,26 @@ public class AdminActivity extends AppCompatActivity {
         TextView tv = new TextView(this);
         tv.setText(text);
         tv.setTextSize(15f);
-        tv.setTextColor(Color.parseColor("#222222"));
+        tv.setTextColor(getColor(R.color.text_primary));
         tv.setTypeface(null, Typeface.BOLD);
         return tv;
     }
 
-    Button styledButton(String text, String colorHex) {
+    Button styledButton(String text, int color) {
         Button b = new Button(this);
         b.setText(text);
         b.setTextColor(Color.WHITE);
-        b.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor(colorHex)));
+        b.setBackgroundTintList(ColorStateList.valueOf(color));
         return b;
     }
 
-    Button smallButton(String text, String colorHex) {
+    Button smallButton(String text, int color) {
         Button b = new Button(this);
         b.setText(text);
         b.setTextSize(11f);
         b.setAllCaps(false);
         b.setTextColor(Color.WHITE);
-        b.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor(colorHex)));
+        b.setBackgroundTintList(ColorStateList.valueOf(color));
         b.setPadding(dp(4), dp(2), dp(4), dp(2));
         return b;
     }
@@ -514,7 +514,7 @@ public class AdminActivity extends AppCompatActivity {
         GradientDrawable gd = new GradientDrawable();
         gd.setColor(color);
         gd.setCornerRadius(dp(10));
-        gd.setStroke(dp(1), Color.parseColor("#BBBBBB"));
+        gd.setStroke(dp(1), getColor(R.color.divider));
         v.setBackground(gd);
     }
 

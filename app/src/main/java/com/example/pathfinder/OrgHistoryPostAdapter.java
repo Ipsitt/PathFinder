@@ -86,7 +86,7 @@ public class OrgHistoryPostAdapter extends RecyclerView.Adapter<OrgHistoryPostAd
         if (post.isCompleted) {
             holder.btnMarkComplete.setText("Completed ✓");
             holder.btnMarkComplete.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#10B981")));
+                    android.content.res.ColorStateList.valueOf(context.getColor(R.color.status_success)));
             holder.btnMarkComplete.setEnabled(false);
             
             holder.btnEditPost.setAlpha(0.5f);
@@ -94,7 +94,7 @@ public class OrgHistoryPostAdapter extends RecyclerView.Adapter<OrgHistoryPostAd
         } else {
             holder.btnMarkComplete.setText("Mark as Completed");
             holder.btnMarkComplete.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#EF4444")));
+                    android.content.res.ColorStateList.valueOf(context.getColor(R.color.status_error)));
             holder.btnMarkComplete.setEnabled(true);
             holder.btnMarkComplete.setOnClickListener(v -> {
                 // Certificate validation constraint

@@ -4,7 +4,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#F5F5F5">
+    android:background="@color/surface_alt">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -19,7 +19,7 @@
             android:text="Tag Management"
             android:textSize="20sp"
             android:textStyle="bold"
-            android:textColor="#1E3A8A"
+            android:textColor="@color/primary_bg"
             android:layout_marginBottom="20dp"/>
 
         <!-- Existing Tags dropdown card -->
@@ -42,7 +42,7 @@
                     android:text="Tags:"
                     android:textSize="14sp"
                     android:textStyle="bold"
-                    android:textColor="#333333"
+                    android:textColor="@color/text_primary"
                     android:layout_marginBottom="8dp"/>
 
                 <Spinner
@@ -83,7 +83,7 @@
                         android:text="Label:"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:textColor="#333333"/>
+                        android:textColor="@color/text_primary"/>
 
                     <EditText
                         android:id="@+id/etTagLabel"
@@ -110,7 +110,7 @@
                         android:text="Color:"
                         android:textSize="14sp"
                         android:textStyle="bold"
-                        android:textColor="#333333"/>
+                        android:textColor="@color/text_primary"/>
 
                     <!-- Live color swatch -->
                     <View
@@ -126,7 +126,7 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:layout_marginStart="10dp"
-                        android:text="#FF0000"
+                        android:text="@color/status_error"
                         android:inputType="text"
                         android:maxLength="7"
                         android:fontFamily="monospace"
@@ -149,8 +149,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Save Tag"
-                    android:backgroundTint="#1E3A8A"
-                    android:textColor="#FFFFFF"
+                    android:backgroundTint="@color/primary_bg"
+                    android:textColor="@color/white"
                     android:layout_marginBottom="8dp"/>
 
                 <!-- Delete selected -->
@@ -159,8 +159,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:text="Delete Selected Tag"
-                    android:backgroundTint="#EF4444"
-                    android:textColor="#FFFFFF"/>
+                    android:backgroundTint="@color/status_error"
+                    android:textColor="@color/white"/>
 
             </LinearLayout>
         </androidx.cardview.widget.CardView>

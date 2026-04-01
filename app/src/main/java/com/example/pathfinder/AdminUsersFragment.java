@@ -48,7 +48,7 @@ public class AdminUsersFragment extends Fragment {
             TextView empty = new TextView(getContext());
             empty.setText("No users registered yet.");
             empty.setPadding(16, 24, 16, 24);
-            empty.setTextColor(Color.parseColor("#888888"));
+            empty.setTextColor(requireContext().getColor(R.color.text_secondary));
             usersTableBody.addView(empty);
             return;
         }
@@ -61,7 +61,7 @@ public class AdminUsersFragment extends Fragment {
             View divider = new View(getContext());
             divider.setLayoutParams(new LinearLayout.LayoutParams(
                     LinearLayout.LayoutParams.MATCH_PARENT, 1));
-            divider.setBackgroundColor(Color.parseColor("#E5E7EB"));
+            divider.setBackgroundColor(requireContext().getColor(R.color.divider));
             usersTableBody.addView(divider);
         }
     }
@@ -72,7 +72,7 @@ public class AdminUsersFragment extends Fragment {
         row.setGravity(Gravity.CENTER_VERTICAL);
         row.setPadding(0, 8, 0, 8);
         row.setBackgroundColor(index % 2 == 0
-                ? Color.WHITE : Color.parseColor("#F8FAFC"));
+                ? requireContext().getColor(R.color.surface_card) : requireContext().getColor(R.color.surface_alt));
 
         // Email cell
         TextView tvEmail = new TextView(getContext());
@@ -81,7 +81,7 @@ public class AdminUsersFragment extends Fragment {
         tvEmail.setLayoutParams(emailParams);
         tvEmail.setText(email);
         tvEmail.setTextSize(13f);
-        tvEmail.setTextColor(Color.parseColor("#333333"));
+        tvEmail.setTextColor(requireContext().getColor(R.color.text_primary));
         tvEmail.setPadding(16, 8, 8, 8);
         tvEmail.setMaxLines(2);
         row.addView(tvEmail);
@@ -96,7 +96,7 @@ public class AdminUsersFragment extends Fragment {
         btnLogin.setTextSize(12f);
         btnLogin.setPadding(4, 4, 4, 4);
         btnLogin.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(Color.parseColor("#2563EB")));
+                android.content.res.ColorStateList.valueOf(requireContext().getColor(R.color.primary_accent)));
         btnLogin.setTextColor(Color.WHITE);
         btnLogin.setOnClickListener(v -> {
             Intent intent = new Intent(getActivity(), StudentHomeActivity.class);
@@ -115,7 +115,7 @@ public class AdminUsersFragment extends Fragment {
         btnDelete.setTextSize(12f);
         btnDelete.setPadding(4, 4, 4, 4);
         btnDelete.setBackgroundTintList(
-                android.content.res.ColorStateList.valueOf(Color.parseColor("#EF4444")));
+                android.content.res.ColorStateList.valueOf(requireContext().getColor(R.color.status_error)));
         btnDelete.setTextColor(Color.WHITE);
         btnDelete.setOnClickListener(v -> confirmDelete(email));
         row.addView(btnDelete);

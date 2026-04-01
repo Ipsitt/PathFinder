@@ -10,7 +10,7 @@
     android:layout_marginBottom="6dp"
     app:cardCornerRadius="12dp"
     app:cardElevation="3dp"
-    app:cardBackgroundColor="#FFFFFF"
+    app:cardBackgroundColor="@color/surface_card"
     android:foreground="?attr/selectableItemBackground"
     android:clickable="true"
     android:focusable="true">
@@ -27,7 +27,7 @@
             android:layout_height="wrap_content"
             android:textSize="16sp"
             android:textStyle="bold"
-            android:textColor="#1E293B"
+            android:textColor="@color/text_primary"
             android:maxLines="2"
             android:ellipsize="end"
             android:layout_marginBottom="10dp"/>
@@ -36,7 +36,7 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:background="#F1F5F9"
+            android:background="@color/surface_alt"
             android:layout_marginBottom="10dp"/>
 
         <!-- Stipend + Duration pills -->
@@ -51,7 +51,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
-                android:textColor="#166534"
+                android:textColor="@color/status_success"
                 android:background="@drawable/pill_green"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
@@ -64,7 +64,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textSize="12sp"
-                android:textColor="#1E40AF"
+                android:textColor="@color/secondary_bg"
                 android:background="@drawable/pill_blue"
                 android:paddingStart="10dp"
                 android:paddingEnd="10dp"
@@ -78,7 +78,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textSize="13sp"
-            android:textColor="#475569"
+            android:textColor="@color/text_secondary"
             android:ellipsize="end"
             android:lineSpacingMultiplier="1.3"
             android:layout_marginBottom="12dp"/>
@@ -97,7 +97,7 @@
                 android:text="Tags: "
                 android:textSize="12sp"
                 android:textStyle="bold"
-                android:textColor="#64748B"
+                android:textColor="@color/text_secondary"
                 android:layout_marginEnd="4dp"/>
 
             <HorizontalScrollView
@@ -120,7 +120,7 @@
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
             android:textSize="14sp"
-            android:textColor="#2563EB"
+            android:textColor="@color/secondary_accent"
             android:textStyle="bold"
             android:layout_marginBottom="12dp"/>
 
@@ -135,9 +135,9 @@
                 android:layout_height="44dp"
                 android:text="✏️ Edit Post"
                 android:textSize="13sp"
-                android:backgroundTint="#F8FAFC"
-                android:textColor="#475569"
-                app:strokeColor="#CBD5E1"
+                android:backgroundTint="@color/surface_alt"
+                android:textColor="@color/text_secondary"
+                app:strokeColor="@color/divider"
                 app:strokeWidth="1dp"
                 android:layout_marginBottom="8dp"/>
 
@@ -147,8 +147,8 @@
                 android:layout_height="44dp"
                 android:text="Mark as Completed"
                 android:textSize="13sp"
-                android:textColor="#FFFFFF"
-                android:backgroundTint="#EF4444"/>
+                android:textColor="@color/white"
+                android:backgroundTint="@color/status_error"/>
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

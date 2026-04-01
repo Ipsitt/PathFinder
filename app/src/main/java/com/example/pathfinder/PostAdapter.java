@@ -177,9 +177,9 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
 
         int bgColor;
         try { bgColor = Color.parseColor(tag.color); }
-        catch (Exception e) { bgColor = Color.parseColor("#94A3B8"); }
+        catch (Exception e) { bgColor = context.getColor(R.color.text_secondary); }
 
-        chip.setTextColor(isColorDark(bgColor) ? Color.WHITE : Color.parseColor("#1E293B"));
+        chip.setTextColor(isColorDark(bgColor) ? Color.WHITE : context.getColor(R.color.text_primary));
         GradientDrawable gd = new GradientDrawable();
         gd.setShape(GradientDrawable.RECTANGLE);
         gd.setCornerRadius(99f);

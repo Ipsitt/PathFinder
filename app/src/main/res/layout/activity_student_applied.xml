@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
-    android:background="#1E3A8A">
+    android:background="@color/primary_bg">
 
     <!-- Top bar -->
     <LinearLayout
@@ -14,7 +14,7 @@
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
-        android:background="#1E3A8A"
+        android:background="@color/primary_bg"
         android:paddingStart="16dp"
         android:paddingEnd="16dp"
         android:paddingTop="16dp"
@@ -30,14 +30,14 @@
             android:clickable="true"
             android:focusable="true"
             android:background="?attr/selectableItemBackgroundBorderless"
-            app:tint="#FFFFFF" />
+            app:tint="@color/text_dark_primary" />
 
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:text="Applied Internships"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/text_dark_primary"
             android:textSize="22sp"
             android:textStyle="bold"/>
 
@@ -51,9 +51,9 @@
         android:layout_weight="1"
         android:gravity="center"
         android:text="You haven't applied to any internships yet."
-        android:textColor="#94A3B8"
+        android:textColor="@color/text_secondary"
         android:textSize="15sp"
-        android:background="#F1F5F9"
+        android:background="@color/surface_alt"
         android:visibility="gone"/>
 
     <!-- Applied posts list -->
@@ -62,7 +62,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:background="#F1F5F9"
+        android:background="@color/surface_alt"
         android:paddingTop="8dp"
         android:paddingBottom="8dp"
         android:clipToPadding="false"/>

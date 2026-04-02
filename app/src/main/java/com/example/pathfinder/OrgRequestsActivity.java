@@ -44,18 +44,24 @@ public class OrgRequestsActivity extends AppCompatActivity {
 
         requestsContainer = findViewById(R.id.requestsContainer);
         requestsTopBar    = findViewById(R.id.requestsTopBar);
-        ImageView btnBack = findViewById(R.id.btnRequestsBack);
 
-        ViewCompat.setOnApplyWindowInsetsListener(requestsTopBar, (v, insets) -> {
-            int sb = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
-            v.setPadding(v.getPaddingLeft(), sb + dp(16), v.getPaddingRight(), v.getPaddingBottom());
-            return insets;
-        });
+        // Status bar spacer height
+        View statusBarSpacer = findViewById(R.id.statusBarSpacer);
+        if (statusBarSpacer != null) {
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(statusBarSpacer, (v, insets) -> {
+                androidx.core.graphics.Insets bars = insets.getInsets(
+                        androidx.core.view.WindowInsetsCompat.Type.systemBars() |
+                        androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+                v.getLayoutParams().height = bars.top;
+                v.requestLayout();
+                return insets;
+            });
+        }
 
         dbHelper = new DBHelper(this);
         orgEmail = getIntent().getStringExtra("email");
 
-        btnBack.setOnClickListener(v -> finish());
+        findViewById(R.id.btnMenu).setOnClickListener(v -> showPopupMenu(v));
 
         if (orgEmail == null || orgEmail.isEmpty()) {
             Toast.makeText(this, "Session Expired", Toast.LENGTH_SHORT).show();
@@ -365,6 +371,22 @@ public class OrgRequestsActivity extends AppCompatActivity {
         }
 
         dialog.show();
+    }
+
+    private void showPopupMenu(View view) {
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(this, view);
+        popup.getMenu().add("Logout");
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getTitle().equals("Logout")) {
+                getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit().clear().apply();
+                android.content.Intent intent = new android.content.Intent(this, MainActivity.class);
+                intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                return true;
+            }
+            return false;
+        });
+        popup.show();
     }
 
     private int dp(int dp) { return Math.round(dp * getResources().getDisplayMetrics().density); }

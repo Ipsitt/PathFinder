@@ -169,6 +169,13 @@ public class StudentRegisterActivity extends AppCompatActivity {
             Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
             return;
         }
+
+        // Password validation: min 5 chars, 1 capital, 1 number
+        if (!password.matches("^(?=.*[0-9])(?=.*[A-Z]).{5,}$")) {
+            Toast.makeText(this, "Password must be at least 5 characters long, " +
+                    "contain at least one number and one capital letter", Toast.LENGTH_LONG).show();
+            return;
+        }
         if (selectedTagIds.size() != MAX_TAGS) {
             Toast.makeText(this, "Please select exactly 5 interest tags", Toast.LENGTH_SHORT).show();
             return;
@@ -182,6 +189,12 @@ public class StudentRegisterActivity extends AppCompatActivity {
                 name, email, password, age, course, phone, selectedPhotoBytes);
 
         if (success) {
+            // Save session
+            getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit()
+                    .putString("logged_in_email", email)
+                    .putString("user_type", "student")
+                    .apply();
+
             dbHelper.saveStudentTags(email, selectedTagIds);
             Toast.makeText(this, "Welcome, " + name + "!", Toast.LENGTH_SHORT).show();
             Intent intent = new Intent(this, StudentHomeActivity.class);

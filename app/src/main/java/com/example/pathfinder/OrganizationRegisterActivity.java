@@ -40,6 +40,13 @@ public class OrganizationRegisterActivity extends AppCompatActivity {
                     return;
                 }
 
+                // Password validation: min 5 chars, 1 capital, 1 number
+                if (!password.matches("^(?=.*[0-9])(?=.*[A-Z]).{5,}$")) {
+                    Toast.makeText(OrganizationRegisterActivity.this, "Password must be at least 5 characters long, " +
+                            "contain at least one number and one capital letter", Toast.LENGTH_LONG).show();
+                    return;
+                }
+
                 if (dbHelper.orgExists(email)) {
                     Toast.makeText(OrganizationRegisterActivity.this,
                             "Email already registered", Toast.LENGTH_SHORT).show();
@@ -49,6 +56,12 @@ public class OrganizationRegisterActivity extends AppCompatActivity {
                 boolean success = dbHelper.insertOrg(name, email, password);
 
                 if (success) {
+                    // Save session
+                    getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit()
+                            .putString("logged_in_email", email)
+                            .putString("user_type", "org")
+                            .apply();
+
                     Toast.makeText(OrganizationRegisterActivity.this,
                             "Registration successful! Welcome.", Toast.LENGTH_SHORT).show();
                     // Go directly to home

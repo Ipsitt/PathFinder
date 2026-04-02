@@ -44,6 +44,12 @@ public class StudentLoginActivity extends AppCompatActivity {
                 boolean valid = dbHelper.checkStudentLogin(email, password);
 
                 if (valid) {
+                    // Save session
+                    getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit()
+                            .putString("logged_in_email", email)
+                            .putString("user_type", "student")
+                            .apply();
+
                     Toast.makeText(StudentLoginActivity.this,
                             "Login successful", Toast.LENGTH_SHORT).show();
                     Intent intent = new Intent(StudentLoginActivity.this, StudentHomeActivity.class);

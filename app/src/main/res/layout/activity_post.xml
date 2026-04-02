@@ -7,17 +7,28 @@
     android:layout_height="match_parent"
     android:background="@color/surface_alt">
 
+    <!-- Status Bar Spacer -->
+    <View
+        android:id="@+id/statusBarSpacer"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="#1E3A8A"
+        app:layout_constraintTop_toTopOf="parent"/>
+
     <!-- Top Bar -->
     <LinearLayout
         android:id="@+id/postTopBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        android:padding="16dp"
+        android:paddingStart="16dp"
+        android:paddingEnd="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
         android:gravity="center_vertical"
-        android:background="@color/surface_card"
+        android:background="@color/primary_bg"
         android:elevation="4dp"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toBottomOf="@id/statusBarSpacer">
 
         <TextView
             android:layout_width="0dp"
@@ -26,7 +37,18 @@
             android:text="Post Internship"
             android:textSize="22sp"
             android:textStyle="bold"
-            android:textColor="@color/text_primary"/>
+            android:textColor="@color/white"/>
+
+        <ImageView
+            android:id="@+id/btnMenu"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:src="@android:drawable/ic_menu_more"
+            android:tint="@color/white"
+            android:padding="4dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"/>
 
     </LinearLayout>
 

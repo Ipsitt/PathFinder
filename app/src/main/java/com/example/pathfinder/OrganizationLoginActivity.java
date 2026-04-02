@@ -39,6 +39,10 @@ public class OrganizationLoginActivity extends AppCompatActivity {
 
             // ── Admin check (using DB) ──────────────────────────
             if (dbHelper.checkAdminLogin(email, password)) {
+                getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit()
+                        .putString("logged_in_email", email)
+                        .putString("user_type", "admin")
+                        .apply();
                 Intent intent = new Intent(this, AdminActivity.class);
                 startActivity(intent);
                 finish();
@@ -47,6 +51,10 @@ public class OrganizationLoginActivity extends AppCompatActivity {
 
             // ── Normal org login ──────────────────────────────────────────────
             if (dbHelper.checkOrgLogin(email, password)) {
+                getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit()
+                        .putString("logged_in_email", email)
+                        .putString("user_type", "org")
+                        .apply();
                 Intent intent = new Intent(this, OrganizationHomeActivity.class);
                 intent.putExtra("email", email);
                 startActivity(intent);

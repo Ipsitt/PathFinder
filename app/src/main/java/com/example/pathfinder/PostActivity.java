@@ -48,13 +48,20 @@ public class PostActivity extends AppCompatActivity {
         setContentView(R.layout.activity_post);
 
         View topBar = findViewById(R.id.postTopBar);
-        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(topBar, (v, insets) -> {
-            androidx.core.graphics.Insets sb = insets.getInsets(
-                    androidx.core.view.WindowInsetsCompat.Type.statusBars());
-            v.setPadding(v.getPaddingLeft(), sb.top + dp(16),
-                    v.getPaddingRight(), v.getPaddingBottom());
-            return insets;
-        });
+        // Status bar spacer height
+        View statusBarSpacer = findViewById(R.id.statusBarSpacer);
+        if (statusBarSpacer != null) {
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(statusBarSpacer, (v, insets) -> {
+                androidx.core.graphics.Insets bars = insets.getInsets(
+                        androidx.core.view.WindowInsetsCompat.Type.systemBars() |
+                        androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+                v.getLayoutParams().height = bars.top;
+                v.requestLayout();
+                return insets;
+            });
+        }
+
+        findViewById(R.id.btnMenu).setOnClickListener(v -> showPopupMenu(v));
 
         dbHelper = new DBHelper(this);
 
@@ -243,6 +250,22 @@ public class PostActivity extends AppCompatActivity {
             intent.putExtra("email", userEmail);
             startActivity(intent);
         });
+    }
+
+    private void showPopupMenu(View view) {
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(this, view);
+        popup.getMenu().add("Logout");
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getTitle().equals("Logout")) {
+                getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit().clear().apply();
+                android.content.Intent intent = new android.content.Intent(this, MainActivity.class);
+                intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                return true;
+            }
+            return false;
+        });
+        popup.show();
     }
 
     private int dp(int dp) {

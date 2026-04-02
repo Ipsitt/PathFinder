@@ -14,11 +14,16 @@ import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.ScrollView;
 import android.widget.Spinner;
 import android.widget.TextView;
 import android.widget.Toast;
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowCompat;
+import androidx.core.view.WindowInsetsCompat;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -43,6 +48,13 @@ public class AdminActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         dbHelper = new DBHelper(this);
 
+        // Setup Window Insets for camera hole / status bar
+        androidx.core.view.WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
+        getWindow().setStatusBarColor(Color.TRANSPARENT);
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            getWindow().getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_STABLE | View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN);
+        }
+
         // Root
         LinearLayout root = new LinearLayout(this);
         root.setOrientation(LinearLayout.VERTICAL);
@@ -50,16 +62,68 @@ public class AdminActivity extends AppCompatActivity {
         root.setLayoutParams(new ViewGroup.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        // Title bar
-        TextView titleBar = new TextView(this);
-        titleBar.setText("Admin Panel");
-        titleBar.setTextSize(18f);
-        titleBar.setTextColor(Color.WHITE);
-        titleBar.setTypeface(null, Typeface.BOLD);
-        titleBar.setBackgroundColor(getColor(R.color.primary_bg));
-        titleBar.setGravity(Gravity.CENTER);
-        titleBar.setPadding(dp(16), dp(14), dp(16), dp(14));
-        root.addView(titleBar, new LinearLayout.LayoutParams(
+        // Top Bar Container (Linear)
+        LinearLayout topBarOuter = new LinearLayout(this);
+        topBarOuter.setOrientation(LinearLayout.VERTICAL);
+        topBarOuter.setBackgroundColor(getColor(R.color.primary_bg));
+
+        // Spacer for Status Bar / Cutout
+        View statusBarSpacer = new View(this);
+        statusBarSpacer.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, 0));
+        topBarOuter.addView(statusBarSpacer);
+
+        // Header Content View
+        android.widget.RelativeLayout headerContent = new android.widget.RelativeLayout(this);
+        int h56 = dp(56);
+        headerContent.setLayoutParams(new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, h56));
+        headerContent.setPadding(dp(16), 0, dp(16), 0);
+        topBarOuter.addView(headerContent);
+
+        // Applying Insets solely to Spacer
+        androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(topBarOuter, (v, insets) -> {
+            androidx.core.graphics.Insets bars = insets.getInsets(
+                    androidx.core.view.WindowInsetsCompat.Type.systemBars() |
+                    androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+            statusBarSpacer.getLayoutParams().height = bars.top;
+            statusBarSpacer.requestLayout();
+            return insets;
+        });
+
+        TextView titleTv = new TextView(this);
+        titleTv.setText("Admin Panel");
+        titleTv.setTextSize(20f);
+        titleTv.setTextColor(Color.WHITE);
+        titleTv.setTypeface(null, Typeface.BOLD);
+        android.widget.RelativeLayout.LayoutParams titleParams = new android.widget.RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        titleParams.addRule(android.widget.RelativeLayout.CENTER_VERTICAL);
+        headerContent.addView(titleTv, titleParams);
+
+        // Logout Button
+        android.widget.ImageView btnLogout = new android.widget.ImageView(this);
+        btnLogout.setImageResource(R.drawable.ic_logout_custom);
+        btnLogout.setColorFilter(Color.WHITE);
+        btnLogout.setPadding(dp(8), dp(8), dp(8), dp(8));
+        btnLogout.setBackgroundResource(android.R.drawable.list_selector_background);
+        btnLogout.setClickable(true);
+        btnLogout.setFocusable(true);
+        android.widget.RelativeLayout.LayoutParams logoutParams = new android.widget.RelativeLayout.LayoutParams(
+                dp(40), dp(40));
+        logoutParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_END);
+        logoutParams.addRule(android.widget.RelativeLayout.CENTER_VERTICAL);
+        headerContent.addView(btnLogout, logoutParams);
+
+        btnLogout.setOnClickListener(vLog -> {
+            // Clear session
+            getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit().clear().apply();
+            Intent intentLog = new Intent(this, MainActivity.class);
+            intentLog.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intentLog);
+        });
+
+        root.addView(topBarOuter, new LinearLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
         // Content area

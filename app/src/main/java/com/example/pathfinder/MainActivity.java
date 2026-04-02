@@ -14,6 +14,27 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        // Session check
+        android.content.SharedPreferences prefs = getSharedPreferences("PathFinderPrefs", MODE_PRIVATE);
+        String email = prefs.getString("logged_in_email", null);
+        String type = prefs.getString("user_type", null);
+
+        if (email != null && type != null) {
+            Intent intent;
+            if (type.equals("admin")) {
+                intent = new Intent(this, AdminActivity.class);
+            } else if (type.equals("org")) {
+                intent = new Intent(this, OrganizationHomeActivity.class);
+            } else {
+                intent = new Intent(this, StudentHomeActivity.class);
+            }
+            intent.putExtra("email", email);
+            startActivity(intent);
+            finish();
+            return;
+        }
+
         setContentView(R.layout.activity_main);
 
         // Find buttons

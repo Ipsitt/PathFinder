@@ -2,6 +2,7 @@ package com.example.pathfinder;
 
 import android.content.Intent;
 import android.graphics.Color;
+import android.view.View;
 import android.os.Bundle;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -41,14 +42,23 @@ public class OrganizationHistoryActivity extends AppCompatActivity {
         bottomHistoryBtn = findViewById(R.id.bottomHistoryBtn);
         topBar           = findViewById(R.id.historyTopBar);
 
-        ViewCompat.setOnApplyWindowInsetsListener(topBar, (v, insets) -> {
-            int sb = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
-            v.setPadding(v.getPaddingLeft(), sb + dp(16), v.getPaddingRight(), v.getPaddingBottom());
-            return insets;
-        });
+        // Status bar spacer height
+        View statusBarSpacer = findViewById(R.id.statusBarSpacer);
+        if (statusBarSpacer != null) {
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(statusBarSpacer, (v, insets) -> {
+                androidx.core.graphics.Insets bars = insets.getInsets(
+                        androidx.core.view.WindowInsetsCompat.Type.systemBars() |
+                        androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+                v.getLayoutParams().height = bars.top;
+                v.requestLayout();
+                return insets;
+            });
+        }
 
         dbHelper = new DBHelper(this);
         orgEmail = getIntent().getStringExtra("email");
+
+        findViewById(R.id.btnMenu).setOnClickListener(v -> showPopupMenu(v));
 
         if (orgEmail == null) {
             Toast.makeText(this, "Session Expired", Toast.LENGTH_SHORT).show();
@@ -93,6 +103,22 @@ public class OrganizationHistoryActivity extends AppCompatActivity {
         List<DBHelper.OrgPost> posts = dbHelper.getPostsForOrg(orgEmail, false);
         adapter = new OrgHistoryPostAdapter(this, posts, orgEmail);
         rvHistoryPosts.setAdapter(adapter);
+    }
+
+    private void showPopupMenu(View view) {
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(this, view);
+        popup.getMenu().add("Logout");
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getTitle().equals("Logout")) {
+                getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit().clear().apply();
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                return true;
+            }
+            return false;
+        });
+        popup.show();
     }
 
     private int dp(int dp) { return Math.round(dp * getResources().getDisplayMetrics().density); }

@@ -92,16 +92,25 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         internsTopBar    = findViewById(R.id.internsTopBar);
         ImageView btnBack = findViewById(R.id.btnInternsBack);
 
-        ViewCompat.setOnApplyWindowInsetsListener(internsTopBar, (v, insets) -> {
-            int sb = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
-            v.setPadding(v.getPaddingLeft(), sb + dp(16), v.getPaddingRight(), v.getPaddingBottom());
-            return insets;
-        });
+        // Status bar spacer height
+        View statusBarSpacer = findViewById(R.id.statusBarSpacer);
+        if (statusBarSpacer != null) {
+            androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(statusBarSpacer, (v, insets) -> {
+                androidx.core.graphics.Insets bars = insets.getInsets(
+                        androidx.core.view.WindowInsetsCompat.Type.systemBars() |
+                        androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+                v.getLayoutParams().height = bars.top;
+                v.requestLayout();
+                return insets;
+            });
+        }
 
         dbHelper = new DBHelper(this);
         orgEmail = getIntent().getStringExtra("email");
         postId   = getIntent().getIntExtra("postId", -1);
         postTitle= getIntent().getStringExtra("postTitle");
+
+        findViewById(R.id.btnMenu).setOnClickListener(v -> showPopupMenu(v));
 
         btnBack.setOnClickListener(v -> finish());
 
@@ -421,6 +430,22 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         if (w <= maxSize && h <= maxSize) return bitmap;
         float scale = Math.min((float) maxSize / w, (float) maxSize / h);
         return Bitmap.createScaledBitmap(bitmap, Math.round(w * scale), Math.round(h * scale), true);
+    }
+
+    private void showPopupMenu(View view) {
+        android.widget.PopupMenu popup = new android.widget.PopupMenu(this, view);
+        popup.getMenu().add("Logout");
+        popup.setOnMenuItemClickListener(item -> {
+            if (item.getTitle().equals("Logout")) {
+                getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit().clear().apply();
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(intent);
+                return true;
+            }
+            return false;
+        });
+        popup.show();
     }
 
     private int dp(int dp) { return Math.round(dp * getResources().getDisplayMetrics().density); }

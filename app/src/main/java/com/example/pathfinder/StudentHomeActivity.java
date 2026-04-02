@@ -172,7 +172,13 @@ public class StudentHomeActivity extends AppCompatActivity {
         popup.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
             if (id == R.id.menu_posts)    { etSearch.setText(""); adapter.updatePosts(rankAndFilter(allPosts, null)); return true; }
-            if (id == R.id.menu_logout)   { Intent i = new Intent(this, StudentLoginActivity.class); i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK); startActivity(i); return true; }
+            if (id == R.id.menu_logout)   {
+                getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit().clear().apply();
+                Intent i = new Intent(this, MainActivity.class);
+                i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                startActivity(i);
+                return true;
+            }
             if (id == R.id.menu_profile) {
                 Intent intent = new Intent(this, StudentProfileActivity.class);
                 intent.putExtra("email", studentEmail);

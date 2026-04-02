@@ -95,13 +95,32 @@
                 android:background="@color/surface_card"/>
 
             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Selected Tags:"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:paddingTop="8dp"
+                android:paddingBottom="4dp"/>
+
+            <com.google.android.flexbox.FlexboxLayout
+                android:id="@+id/tagChipsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                app:flexWrap="wrap"
+                app:alignItems="flex_start"
+                app:justifyContent="flex_start"/>
+
+            <TextView
                 android:id="@+id/tvSelectedTags"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Selected Tags: None"
-                android:paddingTop="8dp"
+                android:text="No tags selected"
                 android:paddingBottom="8dp"
-                android:textColor="@color/text_primary" />
+                android:textSize="12sp"
+                android:textColor="@color/text_secondary"
+                android:visibility="visible"/>
 
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"

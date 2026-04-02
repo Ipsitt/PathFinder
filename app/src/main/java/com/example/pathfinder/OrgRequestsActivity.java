@@ -306,24 +306,60 @@ public class OrgRequestsActivity extends AppCompatActivity {
         dialog.findViewById(R.id.dialogBtnClose).setOnClickListener(v -> dialog.dismiss());
 
         // Recruit button
+        // Recruit button
         Button btnRecruit = dialog.findViewById(R.id.dialogBtnRecruit);
-        boolean alreadyRecruited = dbHelper.isRecruited(postId, studentEmail);
+
+        // Fetch org name for the request
+        DBHelper.Org org = dbHelper.getOrgByEmail(orgEmail);
+        String orgName = org != null ? org.name : orgEmail;
+
+        // Check current state — recruited directly OR via accepted request
+        boolean alreadyRecruited = dbHelper.isRecruited(postId, studentEmail)
+                || dbHelper.hasAcceptedRequest(postId, studentEmail);
+
         if (alreadyRecruited) {
             btnRecruit.setText("Recruited ✓");
             btnRecruit.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(Color.parseColor("#9CA3AF")));
+                    android.content.res.ColorStateList.valueOf(
+                            getColor(R.color.text_secondary)));
             btnRecruit.setEnabled(false);
         } else {
+            // Get post title for the request
+            String postTitle = "";
+            List<DBHelper.OrgPost> posts = dbHelper.getPostsForOrg(orgEmail, true);
+            for (DBHelper.OrgPost op : posts) {
+                if (op.postId == postId) { postTitle = op.title; break; }
+            }
+            final String finalPostTitle = postTitle;
+
             btnRecruit.setOnClickListener(v -> {
-                boolean success = dbHelper.recruitStudent(postId, studentEmail, orgEmail);
-                if (success) {
+                // Use sendRecruitRequest instead of recruitStudent directly
+                // This handles auto-accept if student already applied
+                boolean sent = dbHelper.sendRecruitRequest(
+                        postId, studentEmail, orgEmail, orgName, finalPostTitle);
+
+                if (sent) {
+                    // Check if it was auto-accepted (student had already applied)
+                    boolean wasAutoAccepted = dbHelper.isRecruited(postId, studentEmail);
                     btnRecruit.setText("Recruited ✓");
                     btnRecruit.setBackgroundTintList(
-                            android.content.res.ColorStateList.valueOf(getColor(R.color.text_secondary)));
+                            android.content.res.ColorStateList.valueOf(
+                                    getColor(R.color.text_secondary)));
                     btnRecruit.setEnabled(false);
-                    Toast.makeText(this, profile.name + " has been recruited!", Toast.LENGTH_SHORT).show();
+                    if (wasAutoAccepted) {
+                        Toast.makeText(this,
+                                profile.name + " was already signed up — auto recruited!",
+                                Toast.LENGTH_SHORT).show();
+                    } else {
+                        Toast.makeText(this,
+                                "Recruit request sent to " + profile.name,
+                                Toast.LENGTH_SHORT).show();
+                    }
+                    dialog.dismiss();
+                    loadRequests(); // refresh the list
                 } else {
-                    Toast.makeText(this, "Already recruited", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Request already sent or student already recruited",
+                            Toast.LENGTH_SHORT).show();
                 }
             });
         }

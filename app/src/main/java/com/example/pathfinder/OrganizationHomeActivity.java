@@ -277,6 +277,11 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         inner.setPadding(dp(14), dp(14), dp(14), dp(14));
         card.addView(inner);
 
+        // Tap the card (outside the button) → show full profile dialog
+        card.setOnClickListener(v -> showStudentProfileDialog(profile));
+        card.setClickable(true);
+        card.setFocusable(true);
+
         // ── Row 1: Avatar + name/course block ──────────────────────────────
         LinearLayout topRow = new LinearLayout(this);
         topRow.setOrientation(LinearLayout.HORIZONTAL);
@@ -403,6 +408,72 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         inner.addView(btnRecruit);
 
         return card;
+    }
+
+    private void showStudentProfileDialog(DBHelper.StudentProfile profile) {
+        if (profile == null) return;
+
+        Dialog dialog = new Dialog(this);
+        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        dialog.setContentView(R.layout.dialog_student_profile);
+        if (dialog.getWindow() != null) {
+            dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
+            dialog.getWindow().setLayout(
+                    (int) (getResources().getDisplayMetrics().widthPixels * 0.92),
+                    android.view.WindowManager.LayoutParams.WRAP_CONTENT);
+        }
+
+        ImageView dialogPhoto = dialog.findViewById(R.id.dialogStudentPhoto);
+        if (profile.photo != null && profile.photo.length > 0) {
+            dialogPhoto.setImageBitmap(
+                    BitmapFactory.decodeByteArray(profile.photo, 0, profile.photo.length));
+        } else {
+            dialogPhoto.setImageResource(android.R.drawable.ic_menu_myplaces);
+        }
+
+        ((TextView) dialog.findViewById(R.id.dialogStudentName)).setText(profile.name);
+        ((TextView) dialog.findViewById(R.id.dialogStudentEmail)).setText(profile.email);
+        ((TextView) dialog.findViewById(R.id.dialogStudentAge))
+                .setText("🎂  Age: " + (profile.age != null ? profile.age : "—"));
+        ((TextView) dialog.findViewById(R.id.dialogStudentCourse))
+                .setText("📚  Course: " + (profile.course != null ? profile.course : "—"));
+        ((TextView) dialog.findViewById(R.id.dialogStudentPhone))
+                .setText("📞  Phone: " + (profile.phone != null ? profile.phone : "—"));
+
+        FlexboxLayout tagsLayout = dialog.findViewById(R.id.dialogStudentTags);
+        tagsLayout.removeAllViews();
+        if (profile.tags != null) {
+            for (DBHelper.Tag tag : profile.tags) {
+                TextView chip = new TextView(this);
+                FlexboxLayout.LayoutParams lp = new FlexboxLayout.LayoutParams(
+                        FlexboxLayout.LayoutParams.WRAP_CONTENT,
+                        FlexboxLayout.LayoutParams.WRAP_CONTENT);
+                lp.setMargins(0, 0, dp(8), dp(8));
+                chip.setLayoutParams(lp);
+                chip.setText(tag.label);
+                chip.setTextSize(12f);
+                chip.setPadding(dp(12), dp(5), dp(12), dp(5));
+                int tagColor;
+                try { tagColor = Color.parseColor(tag.color); }
+                catch (Exception e) { tagColor = Color.parseColor("#94A3B8"); }
+                GradientDrawable gd = new GradientDrawable();
+                gd.setShape(GradientDrawable.RECTANGLE);
+                gd.setCornerRadius(dp(20));
+                gd.setColor(tagColor);
+                chip.setBackground(gd);
+                double lum = (0.299 * Color.red(tagColor) + 0.587 * Color.green(tagColor)
+                        + 0.114 * Color.blue(tagColor)) / 255;
+                chip.setTextColor(lum < 0.55 ? Color.WHITE : Color.parseColor("#1E293B"));
+                tagsLayout.addView(chip);
+            }
+        }
+
+        // Hide recruit button — this is view-only from the card tap
+        Button btnRecruit = dialog.findViewById(R.id.dialogBtnRecruit);
+        btnRecruit.setVisibility(View.GONE);
+
+        dialog.findViewById(R.id.dialogBtnClose).setOnClickListener(v -> dialog.dismiss());
+        dialog.show();
     }
 
     // ── Post picker dialog ────────────────────────────────────────────────

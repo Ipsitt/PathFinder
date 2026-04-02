@@ -20,15 +20,13 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
-import com.google.android.flexbox.FlexboxLayout; // Added Import
+import com.google.android.flexbox.FlexboxLayout;
 
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public class PostDetailActivity extends AppCompatActivity {
-
-//This is a joke
 
     DBHelper dbHelper;
     String studentEmail;
@@ -38,7 +36,6 @@ public class PostDetailActivity extends AppCompatActivity {
     TextView tvDetailOrgName, tvDetailOrgEmail, tvDetailTitle,
             tvDetailStipend, tvDetailDuration, tvDetailDescription;
 
-    // Fixed: detailTagsContainer is now FlexboxLayout
     FlexboxLayout detailTagsContainer;
     LinearLayout detailTopBar;
     Button btnSignUp;
@@ -56,25 +53,22 @@ public class PostDetailActivity extends AppCompatActivity {
 
         setContentView(R.layout.activity_post_detail);
 
-        imgDetailOrgPhoto    = findViewById(R.id.imgDetailOrgPhoto);
-        btnBack              = findViewById(R.id.btnBack);
-        tvDetailOrgName      = findViewById(R.id.tvDetailOrgName);
-        tvDetailOrgEmail     = findViewById(R.id.tvDetailOrgEmail);
-        tvDetailTitle        = findViewById(R.id.tvDetailTitle);
-        tvDetailStipend      = findViewById(R.id.tvDetailStipend);
-        tvDetailDuration     = findViewById(R.id.tvDetailDuration);
-        tvDetailDescription  = findViewById(R.id.tvDetailDescription);
+        imgDetailOrgPhoto   = findViewById(R.id.imgDetailOrgPhoto);
+        btnBack             = findViewById(R.id.btnBack);
+        tvDetailOrgName     = findViewById(R.id.tvDetailOrgName);
+        tvDetailOrgEmail    = findViewById(R.id.tvDetailOrgEmail);
+        tvDetailTitle       = findViewById(R.id.tvDetailTitle);
+        tvDetailStipend     = findViewById(R.id.tvDetailStipend);
+        tvDetailDuration    = findViewById(R.id.tvDetailDuration);
+        tvDetailDescription = findViewById(R.id.tvDetailDescription);
+        detailTagsContainer = findViewById(R.id.detailTagsContainer);
+        btnSignUp           = findViewById(R.id.btnSignUp);
+        detailTopBar        = findViewById(R.id.detailTopBar);
 
-        // Fixed: Finding the view as FlexboxLayout
-        detailTagsContainer  = findViewById(R.id.detailTagsContainer);
-
-        btnSignUp            = findViewById(R.id.btnSignUp);
-        detailTopBar         = findViewById(R.id.detailTopBar);
-
-        // Push top bar below status bar
         ViewCompat.setOnApplyWindowInsetsListener(detailTopBar, (v, insets) -> {
             int sb = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
-            v.setPadding(v.getPaddingLeft(), sb + dp(16), v.getPaddingRight(), v.getPaddingBottom());
+            v.setPadding(v.getPaddingLeft(), sb + dp(16),
+                    v.getPaddingRight(), v.getPaddingBottom());
             return insets;
         });
 
@@ -94,9 +88,7 @@ public class PostDetailActivity extends AppCompatActivity {
     }
 
     private void loadPost() {
-        List<Post> all = dbHelper.getAllPostsWithImages();
-        Post post = null;
-        for (Post p : all) { if (p.id == postId) { post = p; break; } }
+        Post post = dbHelper.getPostById(postId);
         if (post == null) {
             Toast.makeText(this, "Post not found", Toast.LENGTH_SHORT).show();
             finish();
@@ -108,21 +100,24 @@ public class PostDetailActivity extends AppCompatActivity {
         tvDetailTitle.setText(post.title);
         tvDetailOrgName.setText(post.orgName);
         tvDetailOrgEmail.setText(post.orgEmail);
-        tvDetailStipend.setText("Rs. " + (post.stipend != null && !post.stipend.isEmpty() ? post.stipend : "Unpaid"));
-        tvDetailDuration.setText(post.timePeriod != null && !post.timePeriod.isEmpty() ? post.timePeriod : "Duration TBD");
+        tvDetailStipend.setText("Rs. " + (post.stipend != null
+                && !post.stipend.isEmpty() ? post.stipend : "Unpaid"));
+        tvDetailDuration.setText(post.timePeriod != null
+                && !post.timePeriod.isEmpty() ? post.timePeriod : "Duration TBD");
         tvDetailDescription.setText(post.description);
 
         if (post.orgImage != null && post.orgImage.length > 0) {
             final byte[] bytes = post.orgImage;
             executor.execute(() -> {
                 Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                mainHandler.post(() -> { if (bmp != null) imgDetailOrgPhoto.setImageBitmap(bmp); });
+                mainHandler.post(() -> {
+                    if (bmp != null) imgDetailOrgPhoto.setImageBitmap(bmp);
+                });
             });
         } else {
             imgDetailOrgPhoto.setImageResource(android.R.drawable.ic_menu_agenda);
         }
 
-        // Tags
         detailTagsContainer.removeAllViews();
         if (post.tags != null) {
             for (DBHelper.Tag tag : post.tags) {
@@ -137,68 +132,86 @@ public class PostDetailActivity extends AppCompatActivity {
                 Toast.makeText(this, "Log in to sign up", Toast.LENGTH_SHORT).show();
                 return;
             }
+            if (dbHelper.isRecruited(postId, studentEmail)
+                    || dbHelper.hasAcceptedRequest(postId, studentEmail)) {
+                Toast.makeText(this, "You are already signed up via recruitment",
+                        Toast.LENGTH_SHORT).show();
+                return;
+            }
             if (dbHelper.hasApplied(postId, studentEmail)) {
-                // Already applied, so unapply (un-sign up)
                 boolean success = dbHelper.unapplyFromPost(postId, studentEmail);
                 if (success) {
-                    Toast.makeText(this, "Un-signed up successfully", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Un-signed up successfully",
+                            Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(this, "Failed to un-sign up", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Failed to un-sign up",
+                            Toast.LENGTH_SHORT).show();
                 }
             } else {
-                // Not applied yet, so sign up
                 boolean success = dbHelper.applyToPost(postId, studentEmail);
                 if (success) {
-                    Toast.makeText(this, "Successfully signed up!", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Successfully signed up!",
+                            Toast.LENGTH_SHORT).show();
                 } else {
-                    Toast.makeText(this, "Failed to sign up", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(this, "Failed to sign up",
+                            Toast.LENGTH_SHORT).show();
                 }
             }
             updateSignUpButton(finalPost);
-        });
+        }); // ← this closing was missing before
+
+
     }
 
     private void updateSignUpButton(Post post) {
-        boolean isRecruited = dbHelper.isRecruited(post.id, studentEmail);
-        boolean hasApplied = dbHelper.hasApplied(post.id, studentEmail);
+        if (studentEmail == null || studentEmail.isEmpty()) {
+            btnSignUp.setText("Sign Up");
+            btnSignUp.setBackgroundTintList(
+                    android.content.res.ColorStateList.valueOf(
+                            getColor(R.color.primary_accent)));
+            btnSignUp.setEnabled(true);
+            return;
+        }
 
-        if (isRecruited) {
-            btnSignUp.setText("Accepted ✓ (No Un-signup)");
+        boolean isRecruited = dbHelper.isRecruited(post.id, studentEmail);
+        boolean hasAccepted = dbHelper.hasAcceptedRequest(post.id, studentEmail);
+        boolean hasApplied  = dbHelper.hasApplied(post.id, studentEmail);
+
+        if (isRecruited || hasAccepted) {
+            btnSignUp.setText("Signed Up ✓");
             btnSignUp.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(getColor(R.color.status_success)));
+                    android.content.res.ColorStateList.valueOf(
+                            getColor(R.color.status_success)));
             btnSignUp.setEnabled(false);
-        } else if (studentEmail != null && hasApplied) {
-            btnSignUp.setText("Signed Up ✓ (Un-signup)");
+        } else if (hasApplied) {
+            btnSignUp.setText("Signed Up ✓ (Tap to undo)");
             btnSignUp.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(getColor(R.color.primary_bg)));
+                    android.content.res.ColorStateList.valueOf(
+                            getColor(R.color.primary_bg)));
             btnSignUp.setEnabled(true);
         } else {
             btnSignUp.setText("Sign Up");
             btnSignUp.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(getColor(R.color.primary_accent)));
+                    android.content.res.ColorStateList.valueOf(
+                            getColor(R.color.primary_accent)));
             btnSignUp.setEnabled(true);
         }
     }
 
     private View makeTagChip(DBHelper.Tag tag) {
         TextView chip = new TextView(this);
-
-        // Fixed: Use FlexboxLayout.LayoutParams instead of LinearLayout
         FlexboxLayout.LayoutParams lp = new FlexboxLayout.LayoutParams(
                 FlexboxLayout.LayoutParams.WRAP_CONTENT,
                 FlexboxLayout.LayoutParams.WRAP_CONTENT);
-
-        lp.setMargins(0, 0, dp(8), dp(6)); // Better spacing control for Flexbox
+        lp.setMargins(0, 0, dp(8), dp(6));
         chip.setLayoutParams(lp);
-
         chip.setText(tag.label);
         chip.setTextSize(12f);
-
         int bgColor;
         try { bgColor = Color.parseColor(tag.color); }
         catch (Exception e) { bgColor = getColor(R.color.text_secondary); }
-
-        chip.setTextColor(isColorDark(bgColor) ? Color.WHITE : getColor(R.color.text_primary));
+        chip.setTextColor(isColorDark(bgColor)
+                ? Color.WHITE : getColor(R.color.text_primary));
         GradientDrawable gd = new GradientDrawable();
         gd.setShape(GradientDrawable.RECTANGLE);
         gd.setCornerRadius(99f);
@@ -209,8 +222,11 @@ public class PostDetailActivity extends AppCompatActivity {
     }
 
     private boolean isColorDark(int color) {
-        return (0.299 * Color.red(color) + 0.587 * Color.green(color) + 0.114 * Color.blue(color)) / 255 < 0.55;
+        return (0.299 * Color.red(color) + 0.587 * Color.green(color)
+                + 0.114 * Color.blue(color)) / 255 < 0.55;
     }
 
-    private int dp(int dp) { return Math.round(dp * getResources().getDisplayMetrics().density); }
+    private int dp(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
 }

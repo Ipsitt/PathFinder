@@ -582,6 +582,51 @@ public class DBHelper extends SQLiteOpenHelper {
         return posts;
     }
 
+    /** Fetches a single post by ID regardless of completion status */
+    public Post getPostById(int postId) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Post post = null;
+
+        Cursor pc = db.rawQuery(
+                "SELECT p.id, p.title, p.description, p.stipend, p.time_period, " +
+                        "p.org_name, p.org_email, o.image " +
+                        "FROM posts p " +
+                        "LEFT JOIN organizations o ON o.email = p.org_email " +
+                        "WHERE p.id = ?",
+                new String[]{String.valueOf(postId)});
+
+        if (pc.moveToFirst()) {
+            post = new Post();
+            post.id          = pc.getInt(0);
+            post.title       = pc.getString(1);
+            post.description = pc.getString(2);
+            post.stipend     = pc.getString(3);
+            post.timePeriod  = pc.getString(4);
+            post.orgName     = pc.getString(5);
+            post.orgEmail    = pc.getString(6);
+            post.orgImage    = pc.getBlob(7);
+            post.tags        = new ArrayList<>();
+        }
+        pc.close();
+
+        if (post == null) return null;
+
+        Cursor tc = db.rawQuery(
+                "SELECT t.id, t.label, t.color FROM tags t " +
+                        "JOIN post_tags pt ON t.id = pt.tag_id WHERE pt.post_id = ?",
+                new String[]{String.valueOf(postId)});
+        while (tc.moveToNext()) {
+            Tag tag = new Tag();
+            tag.id    = tc.getInt(0);
+            tag.label = tc.getString(1);
+            tag.color = tc.getString(2);
+            post.tags.add(tag);
+        }
+        tc.close();
+
+        return post;
+    }
+
     public List<OrgPost> getPostsForOrg(String orgEmail, boolean activeOnly) {
         SQLiteDatabase db = this.getReadableDatabase();
         List<OrgPost> list = new ArrayList<>();
@@ -785,7 +830,26 @@ public class DBHelper extends SQLiteOpenHelper {
                                       String orgEmail, String orgName, String postTitle) {
         SQLiteDatabase db = this.getWritableDatabase();
 
-        // If a pending request already exists for this post+student, reset it
+        // If already recruited, nothing to do
+        if (isRecruited(postId, studentEmail)) return false;
+
+        // If student already applied via self-signup → auto-accept immediately
+        if (hasApplied(postId, studentEmail)) {
+            // Insert as already-accepted request
+            ContentValues cv = new ContentValues();
+            cv.put("post_id",       postId);
+            cv.put("student_email", studentEmail);
+            cv.put("org_email",     orgEmail);
+            cv.put("org_name",      orgName);
+            cv.put("post_title",    postTitle);
+            cv.put("status",        "Accepted");
+            db.insert("recruit_requests", null, cv);
+            // Also insert directly into recruitments
+            recruitStudent(postId, studentEmail, orgEmail);
+            return true;
+        }
+
+        // Block duplicate pending requests
         Cursor c = db.rawQuery(
                 "SELECT id FROM recruit_requests " +
                         "WHERE post_id=? AND student_email=? AND status='Pending'",
@@ -793,12 +857,9 @@ public class DBHelper extends SQLiteOpenHelper {
         boolean pendingExists = c.getCount() > 0;
         c.close();
 
-        if (pendingExists) {
-            // Already a pending one — no need to send again
-            return false;
-        }
+        if (pendingExists) return false;
 
-        // Insert a fresh request regardless of prior accepted/rejected ones
+        // Insert a fresh pending request
         ContentValues cv = new ContentValues();
         cv.put("post_id",       postId);
         cv.put("student_email", studentEmail);
@@ -852,6 +913,17 @@ public class DBHelper extends SQLiteOpenHelper {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery(
                 "SELECT 1 FROM recruit_requests WHERE post_id=? AND student_email=? AND status='Pending'",
+                new String[]{String.valueOf(postId), studentEmail});
+        boolean exists = c.getCount() > 0;
+        c.close();
+        return exists;
+    }
+
+    /** Returns true if student has an accepted recruit request for this post */
+    public boolean hasAcceptedRequest(int postId, String studentEmail) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        Cursor c = db.rawQuery(
+                "SELECT 1 FROM recruit_requests WHERE post_id=? AND student_email=? AND status='Accepted'",
                 new String[]{String.valueOf(postId), studentEmail});
         boolean exists = c.getCount() > 0;
         c.close();
@@ -924,15 +996,12 @@ public class DBHelper extends SQLiteOpenHelper {
                                             android.util.SparseIntArray tagFreq) {
         if (tagFreq.size() == 0 || studentTags == null || studentTags.isEmpty()) return 0.0;
 
-        // Build student tag id set
         java.util.Set<Integer> studentSet = new java.util.HashSet<>();
         for (Tag t : studentTags) studentSet.add(t.id);
 
-        // Build org tag id set (all keys in tagFreq)
         java.util.Set<Integer> orgSet = new java.util.HashSet<>();
         for (int i = 0; i < tagFreq.size(); i++) orgSet.add(tagFreq.keyAt(i));
 
-        // Weighted intersection: sum of freq for tags in both sets
         double weightedIntersection = 0;
         for (int id : studentSet) {
             if (orgSet.contains(id)) {
@@ -940,7 +1009,6 @@ public class DBHelper extends SQLiteOpenHelper {
             }
         }
 
-        // Weighted union: sum of freq for all org tags + 1 per student-only tag
         double weightedUnion = 0;
         for (int i = 0; i < tagFreq.size(); i++) {
             weightedUnion += tagFreq.valueAt(i);
@@ -949,7 +1017,10 @@ public class DBHelper extends SQLiteOpenHelper {
             if (!orgSet.contains(id)) weightedUnion += 1;
         }
 
-        return weightedUnion == 0 ? 0.0 : weightedIntersection / weightedUnion;
+        if (weightedUnion == 0) return 0.0;
+
+        // Cap at 1.0 — score can never exceed 100%
+        return Math.min(1.0, weightedIntersection / weightedUnion);
     }
 
     public byte[] getRecruitmentCertificate(int postId, String studentEmail) {

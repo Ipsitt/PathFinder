@@ -12,7 +12,7 @@ import java.util.List;
 public class DBHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "PathFinder.db";
-    private static final int DB_VERSION = 14; // added admins table and is_seen columns
+    private static final int DB_VERSION = 15; // updated default tag colors
 
     public DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
@@ -48,15 +48,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "label TEXT UNIQUE," +
                 "color TEXT)");
 
-        String[] defaultTags = {"Android", "Java", "Python", "Web Development",
-                "UI/UX", "Data Science", "Machine Learning", "Cybersecurity",
-                "Cloud Computing", "DevOps", "Game Dev", "Blockchain"};
-        for (String tag : defaultTags) {
-            ContentValues cv = new ContentValues();
-            cv.put("label", tag);
-            cv.put("color", "#1E90FF");
-            db.insert("tags", null, cv);
-        }
+        seedDefaultTags(db);
 
         db.execSQL("CREATE TABLE posts(" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT," +
@@ -209,6 +201,10 @@ public class DBHelper extends SQLiteOpenHelper {
             db.insertWithOnConflict("admins", null, adminCv, SQLiteDatabase.CONFLICT_IGNORE);
         }
 
+        if (oldV < 15) {
+            updateDefaultTagColors(db);
+        }
+
         if (oldV < 9) {
             db.execSQL("DROP TABLE IF EXISTS recruitments");
             db.execSQL("DROP TABLE IF EXISTS applications");
@@ -219,6 +215,53 @@ public class DBHelper extends SQLiteOpenHelper {
             db.execSQL("DROP TABLE IF EXISTS students");
             db.execSQL("DROP TABLE IF EXISTS organizations");
             onCreate(db);
+        }
+    }
+
+    private void seedDefaultTags(SQLiteDatabase db) {
+        String[] defaultTags = {"Android", "Java", "UI/UX", "Web Development",
+                "Accounting", "Investment Banking", "Finance", "Project Management",
+                "Data Analysis", "Digital Marketing", "SEO", "Customer Support"};
+        for (String tag : defaultTags) {
+            ContentValues cv = new ContentValues();
+            cv.put("label", tag);
+            cv.put("color", getDefaultTagColor(tag));
+            db.insert("tags", null, cv);
+        }
+    }
+
+    private void updateDefaultTagColors(SQLiteDatabase db) {
+        String[] defaultTags = {"Android", "Java", "UI/UX", "Web Development",
+                "Accounting", "Investment Banking", "Finance", "Project Management",
+                "Data Analysis", "Digital Marketing", "SEO", "Customer Support"};
+        for (String tag : defaultTags) {
+            ContentValues cv = new ContentValues();
+            cv.put("color", getDefaultTagColor(tag));
+            db.update("tags", cv, "label=?", new String[]{tag});
+        }
+    }
+
+    private String getDefaultTagColor(String tag) {
+        switch (tag) {
+            case "Android":
+            case "Java":
+            case "UI/UX":
+            case "Web Development":
+                return "#7CB342";
+            case "Accounting":
+            case "Investment Banking":
+            case "Finance":
+                return "#D81B60";
+            case "Project Management":
+            case "Data Analysis":
+                return "#1E88E5";
+            case "Digital Marketing":
+            case "SEO":
+                return "#E53935";
+            case "Customer Support":
+                return "#8E24AA";
+            default:
+                return "#3B82F6";
         }
     }
 

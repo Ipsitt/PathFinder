@@ -1,5 +1,6 @@
 package com.example.pathfinder;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -596,9 +597,12 @@ public class OrganizationHomeActivity extends AppCompatActivity {
                                 android.content.res.ColorStateList.valueOf(
                                         getColor(R.color.status_warning)));
                         btnSend.setEnabled(false);
-                        Toast.makeText(this,
-                                "Request sent to " + profile.name,
-                                Toast.LENGTH_SHORT).show();
+                        new AlertDialog.Builder(this)
+                                .setMessage("Request sent. " + profile.name
+                                        + " will email you if they accept your internship offer.")
+                                .setPositiveButton("OK", (d, which) -> d.dismiss())
+                                .setCancelable(true)
+                                .show();
                     } else {
                         Toast.makeText(this, "Already sent",
                                 Toast.LENGTH_SHORT).show();

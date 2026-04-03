@@ -1,11 +1,16 @@
 package com.example.pathfinder;
 
+import android.app.AlertDialog;
 import android.app.Dialog;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.Gravity;
 import android.view.View;
 import android.view.Window;
@@ -17,9 +22,7 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
-import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowCompat;
-import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.google.android.flexbox.FlexboxLayout;
@@ -30,7 +33,9 @@ public class OrgRequestsActivity extends AppCompatActivity {
 
     DBHelper dbHelper;
     String orgEmail;
-    LinearLayout requestsContainer, requestsTopBar;
+    LinearLayout requestsContainer;
+    LinearLayout requestsTopBar;
+    private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,15 +48,14 @@ public class OrgRequestsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_org_requests);
 
         requestsContainer = findViewById(R.id.requestsContainer);
-        requestsTopBar    = findViewById(R.id.requestsTopBar);
+        requestsTopBar = findViewById(R.id.requestsTopBar);
 
-        // Status bar spacer height
         View statusBarSpacer = findViewById(R.id.statusBarSpacer);
         if (statusBarSpacer != null) {
             androidx.core.view.ViewCompat.setOnApplyWindowInsetsListener(statusBarSpacer, (v, insets) -> {
                 androidx.core.graphics.Insets bars = insets.getInsets(
-                        androidx.core.view.WindowInsetsCompat.Type.systemBars() |
-                        androidx.core.view.WindowInsetsCompat.Type.displayCutout());
+                        androidx.core.view.WindowInsetsCompat.Type.systemBars()
+                                | androidx.core.view.WindowInsetsCompat.Type.displayCutout());
                 v.getLayoutParams().height = bars.top;
                 v.requestLayout();
                 return insets;
@@ -61,7 +65,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
         dbHelper = new DBHelper(this);
         orgEmail = getIntent().getStringExtra("email");
 
-        findViewById(R.id.btnMenu).setOnClickListener(v -> showPopupMenu(v));
+        findViewById(R.id.btnMenu).setOnClickListener(this::showPopupMenu);
 
         if (orgEmail == null || orgEmail.isEmpty()) {
             Toast.makeText(this, "Session Expired", Toast.LENGTH_SHORT).show();
@@ -76,30 +80,30 @@ public class OrgRequestsActivity extends AppCompatActivity {
 
     private void initBottomNav() {
         findViewById(R.id.bottomHomeBtn).setOnClickListener(v -> {
-            android.content.Intent intent = new android.content.Intent(this, OrganizationHomeActivity.class);
+            Intent intent = new Intent(this, OrganizationHomeActivity.class);
             intent.putExtra("email", orgEmail);
-            intent.setFlags(android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP);
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         });
 
         findViewById(R.id.bottomPostBtn).setOnClickListener(v -> {
-            android.content.Intent intent = new android.content.Intent(this, PostActivity.class);
+            Intent intent = new Intent(this, PostActivity.class);
             intent.putExtra("email", orgEmail);
             startActivity(intent);
         });
 
-        // Current tab is Interns (Requests) - already there, but refresh
         findViewById(R.id.bottomInternsBtn).setOnClickListener(v -> loadRequests());
 
         findViewById(R.id.bottomHistoryBtn).setOnClickListener(v -> {
-            android.content.Intent intent = new android.content.Intent(this, OrganizationHistoryActivity.class);
+            Intent intent = new Intent(this, OrganizationHistoryActivity.class);
             intent.putExtra("email", orgEmail);
             startActivity(intent);
         });
 
-        // Hide dot since we just marked seen
         View dot = findViewById(R.id.dotOrgRequests);
-        if (dot != null) dot.setVisibility(View.GONE);
+        if (dot != null) {
+            dot.setVisibility(View.GONE);
+        }
     }
 
     private void loadRequests() {
@@ -117,16 +121,16 @@ public class OrgRequestsActivity extends AppCompatActivity {
             return;
         }
 
-        for (DBHelper.OrgPost op : posts) {
-            requestsContainer.addView(buildPostCard(op));
+        for (DBHelper.OrgPost post : posts) {
+            requestsContainer.addView(buildPostCard(post));
         }
     }
 
-    private View buildPostCard(DBHelper.OrgPost op) {
+    private View buildPostCard(DBHelper.OrgPost post) {
         CardView card = new CardView(this);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
-        lp.setMargins(dp(16), 0, dp(16), dp(12));
-        card.setLayoutParams(lp);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
+        params.setMargins(dp(16), 0, dp(16), dp(12));
+        card.setLayoutParams(params);
         card.setRadius(dp(12));
         card.setCardElevation(dp(2));
 
@@ -135,35 +139,35 @@ public class OrgRequestsActivity extends AppCompatActivity {
         inner.setPadding(dp(16), dp(16), dp(16), dp(16));
         card.addView(inner);
 
-        TextView tvTitle = new TextView(this);
-        tvTitle.setText(op.title);
-        tvTitle.setTextSize(18f);
-        tvTitle.setTextColor(getColor(R.color.text_primary));
-        tvTitle.setTypeface(null, android.graphics.Typeface.BOLD);
-        inner.addView(tvTitle);
+        TextView title = new TextView(this);
+        title.setText(post.title);
+        title.setTextSize(18f);
+        title.setTextColor(getColor(R.color.text_primary));
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        inner.addView(title);
 
-        TextView tvCount = new TextView(this);
-        tvCount.setText(op.applicantCount + (op.applicantCount == 1 ? " applicant" : " applicants"));
-        tvCount.setTextColor(getColor(R.color.secondary_bg));
-        tvCount.setTextSize(12f);
-        tvCount.setPadding(dp(10), dp(4), dp(10), dp(4));
+        TextView count = new TextView(this);
+        count.setText(post.applicantCount + (post.applicantCount == 1 ? " applicant" : " applicants"));
+        count.setTextColor(getColor(R.color.secondary_bg));
+        count.setTextSize(12f);
+        count.setPadding(dp(10), dp(4), dp(10), dp(4));
 
-        GradientDrawable bg = new GradientDrawable();
-        bg.setColor(getColor(R.color.primary_accent_light));
-        bg.setCornerRadius(dp(20));
-        tvCount.setBackground(bg);
+        GradientDrawable badgeBg = new GradientDrawable();
+        badgeBg.setColor(getColor(R.color.primary_accent_light));
+        badgeBg.setCornerRadius(dp(20));
+        count.setBackground(badgeBg);
 
-        LinearLayout.LayoutParams countLp = new LinearLayout.LayoutParams(-2, -2);
-        countLp.topMargin = dp(8);
-        countLp.bottomMargin = dp(12);
-        tvCount.setLayoutParams(countLp);
-        inner.addView(tvCount);
+        LinearLayout.LayoutParams countParams = new LinearLayout.LayoutParams(-2, -2);
+        countParams.topMargin = dp(8);
+        countParams.bottomMargin = dp(12);
+        count.setLayoutParams(countParams);
+        inner.addView(count);
 
-        if (op.applicantCount > 0) {
-            List<String> applicants = dbHelper.getApplicantEmails(op.postId);
+        if (post.applicantCount > 0) {
+            List<String> applicants = dbHelper.getApplicantEmails(post.postId);
             for (String email : applicants) {
                 DBHelper.StudentProfile profile = dbHelper.getStudentProfile(email);
-                inner.addView(buildStudentRow(profile, email, op.postId));
+                inner.addView(buildStudentRow(profile, email, post.postId));
             }
         }
 
@@ -175,18 +179,16 @@ public class OrgRequestsActivity extends AppCompatActivity {
         row.setOrientation(LinearLayout.VERTICAL);
         row.setPadding(0, dp(6), 0, dp(6));
 
-        // Horizontal: avatar + name/email block + buttons
-        LinearLayout hRow = new LinearLayout(this);
-        hRow.setOrientation(LinearLayout.HORIZONTAL);
-        hRow.setGravity(Gravity.CENTER_VERTICAL);
-        row.addView(hRow);
+        LinearLayout header = new LinearLayout(this);
+        header.setOrientation(LinearLayout.HORIZONTAL);
+        header.setGravity(Gravity.CENTER_VERTICAL);
+        row.addView(header);
 
-        // Small avatar
         ImageView avatar = new ImageView(this);
         int avatarSize = dp(40);
-        LinearLayout.LayoutParams avatarLp = new LinearLayout.LayoutParams(avatarSize, avatarSize);
-        avatarLp.setMarginEnd(dp(10));
-        avatar.setLayoutParams(avatarLp);
+        LinearLayout.LayoutParams avatarParams = new LinearLayout.LayoutParams(avatarSize, avatarSize);
+        avatarParams.setMarginEnd(dp(10));
+        avatar.setLayoutParams(avatarParams);
         avatar.setScaleType(ImageView.ScaleType.CENTER_CROP);
         GradientDrawable circle = new GradientDrawable();
         circle.setShape(GradientDrawable.OVAL);
@@ -199,31 +201,32 @@ public class OrgRequestsActivity extends AppCompatActivity {
         } else {
             avatar.setImageResource(android.R.drawable.ic_menu_myplaces);
         }
-        hRow.addView(avatar);
+        header.addView(avatar);
 
-        // Name + email text block
         LinearLayout textBlock = new LinearLayout(this);
         textBlock.setOrientation(LinearLayout.VERTICAL);
         textBlock.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
+
         String name = (profile != null && profile.name != null) ? profile.name : "Unknown";
+
         TextView tvName = new TextView(this);
         tvName.setText(name);
         tvName.setTextSize(14f);
         tvName.setTextColor(getColor(R.color.text_primary));
         tvName.setTypeface(null, android.graphics.Typeface.BOLD);
         textBlock.addView(tvName);
+
         TextView tvEmail = new TextView(this);
         tvEmail.setText(studentEmail);
         tvEmail.setTextSize(12f);
         tvEmail.setTextColor(getColor(R.color.text_secondary));
         textBlock.addView(tvEmail);
-        hRow.addView(textBlock);
+        header.addView(textBlock);
 
-        // Profile button
         Button btnProfile = new Button(this);
-        LinearLayout.LayoutParams btnLp = new LinearLayout.LayoutParams(dp(80), dp(36));
-        btnLp.setMarginStart(dp(6));
-        btnProfile.setLayoutParams(btnLp);
+        LinearLayout.LayoutParams btnParams = new LinearLayout.LayoutParams(dp(80), dp(36));
+        btnParams.setMarginStart(dp(6));
+        btnProfile.setLayoutParams(btnParams);
         btnProfile.setText("Profile");
         btnProfile.setTextSize(11f);
         btnProfile.setAllCaps(false);
@@ -231,13 +234,12 @@ public class OrgRequestsActivity extends AppCompatActivity {
         btnProfile.setBackgroundTintList(
                 android.content.res.ColorStateList.valueOf(getColor(R.color.primary_bg)));
         btnProfile.setOnClickListener(v -> showStudentProfile(profile, studentEmail, postId));
-        hRow.addView(btnProfile);
+        header.addView(btnProfile);
 
-        // Divider
         View divider = new View(this);
-        LinearLayout.LayoutParams divLp = new LinearLayout.LayoutParams(-1, 1);
-        divLp.topMargin = dp(6);
-        divider.setLayoutParams(divLp);
+        LinearLayout.LayoutParams divParams = new LinearLayout.LayoutParams(-1, 1);
+        divParams.topMargin = dp(6);
+        divider.setLayoutParams(divParams);
         divider.setBackgroundColor(getColor(R.color.divider));
         row.addView(divider);
 
@@ -260,7 +262,6 @@ public class OrgRequestsActivity extends AppCompatActivity {
                     android.view.WindowManager.LayoutParams.WRAP_CONTENT);
         }
 
-        // Photo
         ImageView dialogPhoto = dialog.findViewById(R.id.dialogStudentPhoto);
         if (profile.photo != null && profile.photo.length > 0) {
             Bitmap bmp = BitmapFactory.decodeByteArray(profile.photo, 0, profile.photo.length);
@@ -269,102 +270,102 @@ public class OrgRequestsActivity extends AppCompatActivity {
             dialogPhoto.setImageResource(android.R.drawable.ic_menu_myplaces);
         }
 
-        // Basic fields
         ((TextView) dialog.findViewById(R.id.dialogStudentName)).setText(profile.name);
         ((TextView) dialog.findViewById(R.id.dialogStudentEmail)).setText(profile.email);
         ((TextView) dialog.findViewById(R.id.dialogStudentAge))
-                .setText("🎂  Age: " + (profile.age != null ? profile.age : "—"));
+                .setText("Age: " + (profile.age != null ? profile.age : "-"));
         ((TextView) dialog.findViewById(R.id.dialogStudentCourse))
-                .setText("📚  Course: " + (profile.course != null ? profile.course : "—"));
+                .setText("Course: " + (profile.course != null ? profile.course : "-"));
         ((TextView) dialog.findViewById(R.id.dialogStudentPhone))
-                .setText("📞  Phone: " + (profile.phone != null ? profile.phone : "—"));
+                .setText("Phone: " + (profile.phone != null ? profile.phone : "-"));
 
-        // Tag chips
         FlexboxLayout tagsLayout = dialog.findViewById(R.id.dialogStudentTags);
         tagsLayout.removeAllViews();
         if (profile.tags != null) {
             for (DBHelper.Tag tag : profile.tags) {
                 TextView chip = new TextView(this);
-                FlexboxLayout.LayoutParams lp = new FlexboxLayout.LayoutParams(
+                FlexboxLayout.LayoutParams chipParams = new FlexboxLayout.LayoutParams(
                         FlexboxLayout.LayoutParams.WRAP_CONTENT,
                         FlexboxLayout.LayoutParams.WRAP_CONTENT);
-                lp.setMargins(0, 0, dp(8), dp(8));
-                chip.setLayoutParams(lp);
+                chipParams.setMargins(0, 0, dp(8), dp(8));
+                chip.setLayoutParams(chipParams);
                 chip.setText(tag.label);
                 chip.setTextSize(12f);
                 chip.setPadding(dp(12), dp(5), dp(12), dp(5));
+
                 int tagColor;
-                try { tagColor = Color.parseColor(tag.color); }
-                catch (Exception e) { tagColor = getColor(R.color.text_secondary); }
-                GradientDrawable gd = new GradientDrawable();
-                gd.setShape(GradientDrawable.RECTANGLE);
-                gd.setCornerRadius(dp(20));
-                gd.setColor(tagColor);
-                chip.setBackground(gd);
-                double lum = (0.299 * Color.red(tagColor) + 0.587 * Color.green(tagColor)
+                try {
+                    tagColor = Color.parseColor(tag.color);
+                } catch (Exception e) {
+                    tagColor = getColor(R.color.text_secondary);
+                }
+
+                GradientDrawable chipBg = new GradientDrawable();
+                chipBg.setShape(GradientDrawable.RECTANGLE);
+                chipBg.setCornerRadius(dp(20));
+                chipBg.setColor(tagColor);
+                chip.setBackground(chipBg);
+
+                double lum = (0.299 * Color.red(tagColor)
+                        + 0.587 * Color.green(tagColor)
                         + 0.114 * Color.blue(tagColor)) / 255;
                 chip.setTextColor(lum < 0.55 ? Color.WHITE : getColor(R.color.text_primary));
                 tagsLayout.addView(chip);
             }
         }
 
-        // Close button
         dialog.findViewById(R.id.dialogBtnClose).setOnClickListener(v -> dialog.dismiss());
 
-        // Recruit button
-        // Recruit button
         Button btnRecruit = dialog.findViewById(R.id.dialogBtnRecruit);
-
-        // Fetch org name for the request
         DBHelper.Org org = dbHelper.getOrgByEmail(orgEmail);
         String orgName = org != null ? org.name : orgEmail;
 
-        // Check current state — recruited directly OR via accepted request
         boolean alreadyRecruited = dbHelper.isRecruited(postId, studentEmail)
                 || dbHelper.hasAcceptedRequest(postId, studentEmail);
 
         if (alreadyRecruited) {
-            btnRecruit.setText("Recruited ✓");
+            btnRecruit.setText("Recruited");
             btnRecruit.setBackgroundTintList(
-                    android.content.res.ColorStateList.valueOf(
-                            getColor(R.color.text_secondary)));
+                    android.content.res.ColorStateList.valueOf(getColor(R.color.text_secondary)));
             btnRecruit.setEnabled(false);
         } else {
-            // Get post title for the request
             String postTitle = "";
             List<DBHelper.OrgPost> posts = dbHelper.getPostsForOrg(orgEmail, true);
-            for (DBHelper.OrgPost op : posts) {
-                if (op.postId == postId) { postTitle = op.title; break; }
+            for (DBHelper.OrgPost post : posts) {
+                if (post.postId == postId) {
+                    postTitle = post.title;
+                    break;
+                }
             }
+
             final String finalPostTitle = postTitle;
 
             btnRecruit.setOnClickListener(v -> {
-                // Use sendRecruitRequest instead of recruitStudent directly
-                // This handles auto-accept if student already applied
                 boolean sent = dbHelper.sendRecruitRequest(
                         postId, studentEmail, orgEmail, orgName, finalPostTitle);
 
                 if (sent) {
-                    // Check if it was auto-accepted (student had already applied)
                     boolean wasAutoAccepted = dbHelper.isRecruited(postId, studentEmail);
-                    btnRecruit.setText("Recruited ✓");
+                    btnRecruit.setText("Recruited");
                     btnRecruit.setBackgroundTintList(
-                            android.content.res.ColorStateList.valueOf(
-                                    getColor(R.color.text_secondary)));
+                            android.content.res.ColorStateList.valueOf(getColor(R.color.text_secondary)));
                     btnRecruit.setEnabled(false);
-                    if (wasAutoAccepted) {
-                        Toast.makeText(this,
-                                profile.name + " was already signed up — auto recruited!",
-                                Toast.LENGTH_SHORT).show();
-                    } else {
-                        Toast.makeText(this,
-                                "Recruit request sent to " + profile.name,
-                                Toast.LENGTH_SHORT).show();
-                    }
+
+                    Toast.makeText(this,
+                            profile.name + " was recruited successfully!",
+                            Toast.LENGTH_SHORT).show();
                     dialog.dismiss();
-                    loadRequests(); // refresh the list
+                    loadRequests();
+
+                    if (wasAutoAccepted) {
+                        mainHandler.postDelayed(
+                                () -> showContactStudentDialog(
+                                        profile.name, studentEmail, orgName, finalPostTitle),
+                                3000);
+                    }
                 } else {
-                    Toast.makeText(this, "Request already sent or student already recruited",
+                    Toast.makeText(this,
+                            "Request already sent or student already recruited",
                             Toast.LENGTH_SHORT).show();
                 }
             });
@@ -373,14 +374,65 @@ public class OrgRequestsActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    private void showContactStudentDialog(String studentName, String studentEmail,
+                                          String orgName, String internshipTitle) {
+        String safeStudentName = (studentName == null || studentName.trim().isEmpty())
+                ? "the student" : studentName.trim();
+
+        new AlertDialog.Builder(this)
+                .setMessage("Would you like to contact " + safeStudentName
+                        + " via email, or wait for them to email you?")
+                .setPositiveButton("Yes", (dialog, which) ->
+                        openGmailForOfferLetter(
+                                studentEmail, safeStudentName, orgName, internshipTitle))
+                .setNegativeButton("Wait for their email",
+                        (dialog, which) -> dialog.dismiss())
+                .setCancelable(true)
+                .show();
+    }
+
+    private void openGmailForOfferLetter(String studentEmail, String studentName,
+                                         String orgName, String internshipTitle) {
+        String safeStudentName = (studentName == null || studentName.trim().isEmpty())
+                ? "Student" : studentName.trim();
+        String safeOrgName = (orgName == null || orgName.trim().isEmpty())
+                ? orgEmail : orgName.trim();
+        String safeInternshipTitle =
+                (internshipTitle == null || internshipTitle.trim().isEmpty())
+                        ? "Intern" : internshipTitle.trim();
+
+        String body = "Dear " + safeStudentName + ",\n\n"
+                + "We are pleased to offer you the position of "
+                + safeInternshipTitle + " at " + safeOrgName
+                + ". We believe this opportunity will allow you to gain valuable practical experience and contribute to our team.\n\n"
+                + "Please confirm your acceptance of this offer by replying to this email. If you have any questions or require further information, feel free to contact us.\n\n"
+                + "We look forward to having you with us.\n\n"
+                + "Sincerely,\n"
+                + safeOrgName;
+
+        Intent emailIntent = new Intent(Intent.ACTION_SEND);
+        emailIntent.setType("message/rfc822");
+        emailIntent.setPackage("com.google.android.gm");
+        emailIntent.putExtra(Intent.EXTRA_EMAIL, new String[]{studentEmail});
+        emailIntent.putExtra(Intent.EXTRA_SUBJECT, "Internship Offer Letter");
+        emailIntent.putExtra(Intent.EXTRA_TEXT, body);
+
+        try {
+            startActivity(emailIntent);
+        } catch (ActivityNotFoundException e) {
+            Toast.makeText(this, "Gmail is not installed on this device.",
+                    Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void showPopupMenu(View view) {
         android.widget.PopupMenu popup = new android.widget.PopupMenu(this, view);
         popup.getMenu().add("Logout");
         popup.setOnMenuItemClickListener(item -> {
             if (item.getTitle().equals("Logout")) {
                 getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit().clear().apply();
-                android.content.Intent intent = new android.content.Intent(this, MainActivity.class);
-                intent.setFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK | android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK);
+                Intent intent = new Intent(this, MainActivity.class);
+                intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
                 startActivity(intent);
                 return true;
             }
@@ -389,5 +441,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
         popup.show();
     }
 
-    private int dp(int dp) { return Math.round(dp * getResources().getDisplayMetrics().density); }
+    private int dp(int dp) {
+        return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
 }

@@ -24,7 +24,9 @@ import androidx.recyclerview.widget.RecyclerView;
 import java.io.OutputStream;
 import java.util.List;
 
-public class StudentHistoryActivity extends AppCompatActivity {
+// Internship history screen for students.
+
+public class StuHistoryActivity extends AppCompatActivity {
 
     RecyclerView rvHistory;
     LinearLayout topBar;
@@ -33,6 +35,7 @@ public class StudentHistoryActivity extends AppCompatActivity {
     DBHelper dbHelper;
     String studentEmail;
 
+    // Initializes the internship history screen.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -42,7 +45,7 @@ public class StudentHistoryActivity extends AppCompatActivity {
         new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView())
                 .setAppearanceLightStatusBars(false);
 
-        setContentView(R.layout.activity_student_history);
+        setContentView(R.layout.activity_stu_history);
 
         topBar       = findViewById(R.id.topBar);
         btnBack      = findViewById(R.id.btnBack);
@@ -62,11 +65,12 @@ public class StudentHistoryActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
         rvHistory.setLayoutManager(new LinearLayoutManager(this));
 
-        loadHistoryPosts();
+        loadHistoryStuPosts();
     }
 
-    private void loadHistoryPosts() {
-        List<Post> history = dbHelper.getStudentHistoryPosts(studentEmail);
+    // Loads internship history for the student.
+    private void loadHistoryStuPosts() {
+        List<StuPost> history = dbHelper.getStudentHistoryStuPosts(studentEmail);
 
         if (history.isEmpty()) {
             rvHistory.setVisibility(View.GONE);
@@ -75,7 +79,7 @@ public class StudentHistoryActivity extends AppCompatActivity {
             tvEmpty.setVisibility(View.GONE);
             rvHistory.setVisibility(View.VISIBLE);
 
-            StudentHistoryAdapter adapter = new StudentHistoryAdapter(
+            StuHistoryAdapter adapter = new StuHistoryAdapter(
                     this, history, studentEmail,
                     this::saveImageToGallery
             );
@@ -83,6 +87,7 @@ public class StudentHistoryActivity extends AppCompatActivity {
         }
     }
 
+    // Saves the certificate image to the gallery.
     private void saveImageToGallery(Bitmap bitmap, String postTitle) {
         String filename = "Certificate_" + (postTitle != null ? postTitle.replaceAll("[^a-zA-Z0-9.-]", "_") : "Unknown") + ".png";
         
@@ -106,6 +111,7 @@ public class StudentHistoryActivity extends AppCompatActivity {
         }
     }
 
+    // Converts dp units to pixels.
     private int dp(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }

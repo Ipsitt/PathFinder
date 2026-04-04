@@ -2,7 +2,9 @@ package com.example.pathfinder;
 
 import java.util.List;
 
-public class Post {
+// Data model for student-facing internship posts.
+
+public class StuPost {
     public int id;
     public String title;
     public String description;

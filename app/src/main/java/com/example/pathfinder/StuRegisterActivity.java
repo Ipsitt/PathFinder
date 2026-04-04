@@ -9,7 +9,6 @@ import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
@@ -27,7 +26,9 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class StudentProfileActivity extends AppCompatActivity {
+// Registration screen for students.
+
+public class StuRegisterActivity extends AppCompatActivity {
 
     ImageView imgProfilePic;
     EditText etStudentName, etStudentEmail, etStudentPassword,
@@ -37,8 +38,7 @@ public class StudentProfileActivity extends AppCompatActivity {
     FlexboxLayout tagFlexbox;
 
     DBHelper dbHelper;
-    String studentEmail;
-    byte[] selectedPhotoBytes = null; // null = keep existing photo
+    byte[] selectedPhotoBytes = null;
     final List<Integer> selectedTagIds = new ArrayList<>();
     List<DBHelper.Tag> allTags = new ArrayList<>();
 
@@ -64,10 +64,11 @@ public class StudentProfileActivity extends AppCompatActivity {
                 }
             });
 
+    // Initializes the student registration screen.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_student_register); // reuse registration layout
+        setContentView(R.layout.activity_stu_register);
 
         imgProfilePic      = findViewById(R.id.imgProfilePic);
         etStudentName      = findViewById(R.id.etStudentName);
@@ -81,39 +82,8 @@ public class StudentProfileActivity extends AppCompatActivity {
         tvGoToLogin        = findViewById(R.id.tvGoToLogin);
         tagFlexbox         = findViewById(R.id.tagFlexbox);
 
-        dbHelper     = new DBHelper(this);
-        studentEmail = getIntent().getStringExtra("email");
+        dbHelper = new DBHelper(this);
 
-        // ── Adapt UI for edit mode ──────────────────────────────────────────
-        btnStudentRegister.setText("Save Changes");
-        tvGoToLogin.setText("← Back");
-        tvGoToLogin.setOnClickListener(v -> finish());
-
-        // Email is the primary key — lock it
-        etStudentEmail.setEnabled(false);
-        etStudentEmail.setAlpha(0.5f);
-
-        // Password change not handled here — hide it
-        etStudentPassword.setVisibility(View.GONE);
-
-        // ── Pre-fill fields from DB using getStudentProfile ─────────────────
-        DBHelper.StudentProfile profile = dbHelper.getStudentProfile(studentEmail);
-        if (profile != null) {
-            etStudentName.setText(profile.name);
-            etStudentAge.setText(profile.age);
-            etStudentCourse.setText(profile.course);
-            etStudentPhone.setText(profile.phone);
-            etStudentEmail.setText(profile.email);
-
-            if (profile.photo != null) {
-                Bitmap bmp = BitmapFactory.decodeByteArray(
-                        profile.photo, 0, profile.photo.length);
-                imgProfilePic.setImageBitmap(bmp);
-                imgProfilePic.setPadding(0, 0, 0, 0);
-            }
-        }
-
-        // ── Photo picker ────────────────────────────────────────────────────
         imgProfilePic.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK,
                     android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -121,17 +91,16 @@ public class StudentProfileActivity extends AppCompatActivity {
             imagePickerLauncher.launch(intent);
         });
 
-        // ── Build tag chips with existing selections pre-highlighted ────────
         buildTagChips();
-
-        btnStudentRegister.setOnClickListener(v -> attemptSave());
+        btnStudentRegister.setOnClickListener(v -> attemptRegister());
+        tvGoToLogin.setOnClickListener(v -> {
+            startActivity(new Intent(this, StuLoginActivity.class));
+            finish();
+        });
     }
 
+    // Builds selectable tag chips.
     private void buildTagChips() {
-        // Load student's current tag IDs first
-        selectedTagIds.clear();
-        selectedTagIds.addAll(dbHelper.getStudentTagIds(studentEmail));
-
         allTags = dbHelper.getAllTags();
         tagFlexbox.removeAllViews();
 
@@ -147,14 +116,14 @@ public class StudentProfileActivity extends AppCompatActivity {
             chip.setPadding(dp(14), dp(8), dp(14), dp(8));
             chip.setClickable(true);
             chip.setFocusable(true);
-
-            // Pre-highlight existing selections
-            applyChipStyle(chip, tag, selectedTagIds.contains(tag.id));
+    // Styles a tag chip based on its selection state.
+            applyChipStyle(chip, tag, false);
 
             chip.setOnClickListener(v -> {
                 boolean isSelected = selectedTagIds.contains(tag.id);
                 if (isSelected) {
                     selectedTagIds.remove((Integer) tag.id);
+    // Styles a tag chip based on its selection state.
                     applyChipStyle(chip, tag, false);
                 } else {
                     if (selectedTagIds.size() >= MAX_TAGS) {
@@ -162,71 +131,91 @@ public class StudentProfileActivity extends AppCompatActivity {
                         return;
                     }
                     selectedTagIds.add(tag.id);
+    // Styles a tag chip based on its selection state.
                     applyChipStyle(chip, tag, true);
                 }
                 tvTagCount.setText(selectedTagIds.size() + " / 5 selected");
                 tvTagCount.setTextColor(selectedTagIds.size() == MAX_TAGS
-                        ? getColor(R.color.status_success) : getColor(R.color.secondary_accent));
+                        ? Color.parseColor("#16A34A") : Color.parseColor("#2563EB"));
             });
 
             tagFlexbox.addView(chip);
         }
-
-        // Sync counter with pre-loaded selections
-        tvTagCount.setText(selectedTagIds.size() + " / 5 selected");
-        tvTagCount.setTextColor(selectedTagIds.size() == MAX_TAGS
-                ? getColor(R.color.status_success) : getColor(R.color.secondary_accent));
     }
 
+    // Styles a tag chip based on its selection state.
     private void applyChipStyle(TextView chip, DBHelper.Tag tag, boolean selected) {
         GradientDrawable gd = new GradientDrawable();
         gd.setShape(GradientDrawable.RECTANGLE);
         gd.setCornerRadius(dp(32));
         int tagColor;
         try { tagColor = Color.parseColor(tag.color); }
-        catch (Exception e) { tagColor = getColor(R.color.text_secondary); }
+        catch (Exception e) { tagColor = Color.parseColor("#94A3B8"); }
 
         if (selected) {
             gd.setColor(tagColor);
             gd.setStroke(0, Color.TRANSPARENT);
-            chip.setTextColor(isColorDark(tagColor) ? Color.WHITE : getColor(R.color.text_primary));
+            chip.setTextColor(isColorDark(tagColor) ? Color.WHITE : Color.parseColor("#1E293B"));
         } else {
-            gd.setColor(getColor(R.color.surface_alt));
+            gd.setColor(Color.parseColor("#F1F5F9"));
             gd.setStroke(dp(2), tagColor);
             chip.setTextColor(tagColor);
         }
         chip.setBackground(gd);
     }
 
-    private void attemptSave() {
-        String name   = etStudentName.getText().toString().trim();
-        String age    = etStudentAge.getText().toString().trim();
-        String course = etStudentCourse.getText().toString().trim();
-        String phone  = etStudentPhone.getText().toString().trim();
+    // Validates the form and creates the student account.
+    private void attemptRegister() {
+        String name     = etStudentName.getText().toString().trim();
+        String age      = etStudentAge.getText().toString().trim();
+        String course   = etStudentCourse.getText().toString().trim();
+        String phone    = etStudentPhone.getText().toString().trim();
+        String email    = etStudentEmail.getText().toString().trim();
+        String password = etStudentPassword.getText().toString().trim();
 
-        if (name.isEmpty() || age.isEmpty() || course.isEmpty() || phone.isEmpty()) {
+        if (name.isEmpty() || age.isEmpty() || course.isEmpty()
+                || phone.isEmpty() || email.isEmpty() || password.isEmpty()) {
             Toast.makeText(this, "Please fill in all fields", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        // Password validation: min 5 chars, 1 capital, 1 number
+        if (!password.matches("^(?=.*[0-9])(?=.*[A-Z]).{5,}$")) {
+            Toast.makeText(this, "Password must be at least 5 characters long, " +
+                    "contain at least one number and one capital letter", Toast.LENGTH_LONG).show();
             return;
         }
         if (selectedTagIds.size() != MAX_TAGS) {
             Toast.makeText(this, "Please select exactly 5 interest tags", Toast.LENGTH_SHORT).show();
             return;
         }
+        if (dbHelper.studentExists(email)) {
+            Toast.makeText(this, "Email already registered", Toast.LENGTH_SHORT).show();
+            return;
+        }
 
-        boolean success = dbHelper.updateStudent(
-                studentEmail, name, age, course, phone, selectedPhotoBytes);
+        boolean success = dbHelper.insertStudent(
+                name, email, password, age, course, phone, selectedPhotoBytes);
 
         if (success) {
-            dbHelper.saveStudentTags(studentEmail, selectedTagIds);
-            Toast.makeText(this, "Profile updated!", Toast.LENGTH_SHORT).show();
-            finish();
+            // Save session
+            getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit()
+                    .putString("logged_in_email", email)
+                    .putString("user_type", "student")
+                    .apply();
+
+            dbHelper.saveStudentTags(email, selectedTagIds);
+            Toast.makeText(this, "Welcome, " + name + "!", Toast.LENGTH_SHORT).show();
+            Intent intent = new Intent(this, StuHomeActivity.class);
+            intent.putExtra("email", email);
+            intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+            startActivity(intent);
         } else {
-            Toast.makeText(this, "Update failed. Try again.", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Registration failed. Try again.", Toast.LENGTH_SHORT).show();
         }
     }
 
-    // ── Helpers ─────────────────────────────────────────────────────────────
-
+    // Decodes an image from the selected URI.
     private Bitmap decodeBitmap(Uri uri) throws IOException {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             ImageDecoder.Source source = ImageDecoder.createSource(getContentResolver(), uri);
@@ -239,6 +228,7 @@ public class StudentProfileActivity extends AppCompatActivity {
         }
     }
 
+    // Resizes a profile photo before saving.
     private Bitmap scaleBitmap(Bitmap bmp, int maxSize) {
         int w = bmp.getWidth(), h = bmp.getHeight();
         if (w <= maxSize && h <= maxSize) return bmp;
@@ -246,12 +236,14 @@ public class StudentProfileActivity extends AppCompatActivity {
         return Bitmap.createScaledBitmap(bmp, Math.round(w * scale), Math.round(h * scale), true);
     }
 
+    // Checks whether a tag color needs light text.
     private boolean isColorDark(int color) {
         double lum = (0.299 * Color.red(color) + 0.587 * Color.green(color)
                 + 0.114 * Color.blue(color)) / 255;
         return lum < 0.55;
     }
 
+    // Converts dp units to pixels.
     private int dp(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }

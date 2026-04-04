@@ -8,6 +8,8 @@ import android.database.sqlite.SQLiteOpenHelper;
 
 import java.security.MessageDigest;
 
+// Authentication database helper for student and organization accounts.
+
 public class DB extends SQLiteOpenHelper {
 
     public static final String DATABASE_NAME = "Mydatabase.db";
@@ -16,16 +18,18 @@ public class DB extends SQLiteOpenHelper {
     // Student table
     public static final String STUDENT_TABLE = "students";
 
-    // Organization table
+    // Org table
     public static final String ORG_TABLE = "organizations";
 
     public static final String COL_EMAIL = "email";
     public static final String COL_PASSWORD = "password";
 
+    // Creates the authentication database helper.
     public DB(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
+    // Creates the login tables.
     @Override
     public void onCreate(SQLiteDatabase db) {
 
@@ -34,12 +38,13 @@ public class DB extends SQLiteOpenHelper {
                 COL_EMAIL + " TEXT PRIMARY KEY, " +
                 COL_PASSWORD + " TEXT)");
 
-        // Organization table
+        // Org table
         db.execSQL("CREATE TABLE " + ORG_TABLE + " (" +
                 COL_EMAIL + " TEXT PRIMARY KEY, " +
                 COL_PASSWORD + " TEXT)");
     }
 
+    // Recreates the login tables during an upgrade.
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         db.execSQL("DROP TABLE IF EXISTS " + STUDENT_TABLE);
@@ -69,6 +74,7 @@ public class DB extends SQLiteOpenHelper {
     // STUDENT METHODS
     // =========================
 
+    // Creates a student login record.
     public boolean insertStudent(String email, String password) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -80,6 +86,7 @@ public class DB extends SQLiteOpenHelper {
         return result != -1;
     }
 
+    // Validates student login credentials.
     public boolean checkStudent(String email, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -94,6 +101,7 @@ public class DB extends SQLiteOpenHelper {
         return exists;
     }
 
+    // Checks whether a student account already exists.
     public boolean studentExists(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -111,6 +119,7 @@ public class DB extends SQLiteOpenHelper {
     // ORGANIZATION METHODS
     // =========================
 
+    // Creates an organization login record.
     public boolean insertOrg(String email, String password) {
         SQLiteDatabase db = this.getWritableDatabase();
 
@@ -122,6 +131,7 @@ public class DB extends SQLiteOpenHelper {
         return result != -1;
     }
 
+    // Validates organization login credentials.
     public boolean checkOrg(String email, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
 
@@ -136,6 +146,7 @@ public class DB extends SQLiteOpenHelper {
         return exists;
     }
 
+    // Checks whether an organization account already exists.
     public boolean orgExists(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
 

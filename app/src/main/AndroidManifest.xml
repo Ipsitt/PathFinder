@@ -13,23 +13,23 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.PathFinder">
 
-        <activity android:name=".StudentLoginActivity" />
-        <activity android:name=".OrganizationLoginActivity" />
-        <activity android:name=".StudentRegisterActivity"/>
-        <activity android:name=".OrganizationRegisterActivity"/>
-        <activity android:name=".StudentHomeActivity" />
-        <activity android:name=".OrganizationHomeActivity" />
+        <activity android:name=".StuLoginActivity" />
+        <activity android:name=".OrgLoginActivity" />
+        <activity android:name=".StuRegisterActivity"/>
+        <activity android:name=".OrgRegisterActivity"/>
+        <activity android:name=".StuHomeActivity" />
+        <activity android:name=".OrgHomeActivity" />
         <activity android:name=".AdminActivity" />
-        <activity android:name=".PostActivity" />
-        <activity android:name=".EditPostActivity" />
-        <activity android:name=".PostDetailActivity"/>
+        <activity android:name=".OrgPostActivity" />
+        <activity android:name=".OrgEditPostActivity" />
+        <activity android:name=".StuPostDetailActivity"/>
         <activity android:name=".OrgRequestsActivity"/>
-        <activity android:name=".StudentProfileActivity" />
-        <activity android:name=".StudentAppliedActivity" />
-        <activity android:name=".StudentHistoryActivity" />
-        <activity android:name=".OrganizationHistoryActivity" />
+        <activity android:name=".StuProfileActivity" />
+        <activity android:name=".StuAppliedActivity" />
+        <activity android:name=".StuHistoryActivity" />
+        <activity android:name=".OrgHistoryActivity" />
         <activity android:name=".OrgHistoryInternsActivity" />
-        <activity android:name=".StudentRequestsActivity" />
+        <activity android:name=".StuRequestsActivity" />
 
         <activity
             android:name=".MainActivity"

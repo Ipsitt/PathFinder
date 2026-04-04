@@ -9,15 +9,26 @@ import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.List;
 
+// Main database helper for users, tags, posts, requests, and recruitments.
+
 public class DBHelper extends SQLiteOpenHelper {
 
     private static final String DB_NAME = "PathFinder.db";
     private static final int DB_VERSION = 15; // updated default tag colors
 
+    // Creates the main database helper.
     public DBHelper(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
     }
 
+    // Turns on SQLite foreign key support for cascade deletes.
+    @Override
+    public void onConfigure(SQLiteDatabase db) {
+        super.onConfigure(db);
+        db.setForeignKeyConstraintsEnabled(true);
+    }
+
+    // Creates the app database tables and seed data.
     @Override
     public void onCreate(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE organizations(" +
@@ -48,6 +59,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 "label TEXT UNIQUE," +
                 "color TEXT)");
 
+    // Inserts the default internship tags.
         seedDefaultTags(db);
 
         db.execSQL("CREATE TABLE posts(" +
@@ -111,7 +123,7 @@ public class DBHelper extends SQLiteOpenHelper {
         adminCv.put("password", hashPassword("admin"));
         db.insert("admins", null, adminCv);
 
-        // ── Seed: Demo Organization ───────────────────────────────────────────
+        // ── Seed: Demo Org ───────────────────────────────────────────
         ContentValues seedOrg = new ContentValues();
         seedOrg.put("name",        "OG Media");
         seedOrg.put("email",       "og@og.com");
@@ -138,7 +150,7 @@ public class DBHelper extends SQLiteOpenHelper {
             db.insert("student_tags", null, stTag);
         }
 
-        // ── Seed: Demo Post ("Content Creator") ──────────────────────────────
+        // ── Seed: Demo StuPost ("Content Creator") ──────────────────────────────
         ContentValues seedPost = new ContentValues();
         seedPost.put("title",       "Content Creator");
         seedPost.put("description", "We are looking for a creative content creator to join our team and help produce engaging digital content.");
@@ -159,6 +171,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    // Migrates the app database to a newer version.
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldV, int newV) {
 
@@ -218,6 +231,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    // Inserts the default internship tags.
     private void seedDefaultTags(SQLiteDatabase db) {
         String[] defaultTags = {"Android", "Java", "UI/UX", "Web Development",
                 "Accounting", "Investment Banking", "Finance", "Project Management",
@@ -230,6 +244,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    // Updates pre-set tag colors to the admin palette.
     private void updateDefaultTagColors(SQLiteDatabase db) {
         String[] defaultTags = {"Android", "Java", "UI/UX", "Web Development",
                 "Accounting", "Investment Banking", "Finance", "Project Management",
@@ -241,6 +256,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    // Returns the default color for a tag.
     private String getDefaultTagColor(String tag) {
         switch (tag) {
             case "Android":
@@ -267,6 +283,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     // ── Password hashing ──────────────────────────────────────────────────
 
+    // Hashes a password before storing or comparing it.
     public String hashPassword(String password) {
         try {
             MessageDigest md = MessageDigest.getInstance("SHA-256");
@@ -282,6 +299,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     // ── Admin methods ─────────────────────────────────────────────────────
 
+    // Validates admin login credentials.
     public boolean checkAdminLogin(String email, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.query("admins", null, "email=? AND password=?",
@@ -293,10 +311,12 @@ public class DBHelper extends SQLiteOpenHelper {
 
     // ── Update Notification methods ────────────────────────────────────────
 
+    // Checks whether the student has unseen updates.
     public boolean hasUnseenStudentUpdates(String email) {
         return hasUnseenStudentRequests(email) || hasUnseenStudentRecruitments(email);
     }
 
+    // Checks whether the student has unseen recruit requests.
     public boolean hasUnseenStudentRequests(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery("SELECT 1 FROM recruit_requests WHERE student_email=? AND is_seen=0 AND status='Pending'", new String[]{email});
@@ -305,6 +325,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
+    // Checks whether the student has unseen recruitment updates.
     public boolean hasUnseenStudentRecruitments(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery("SELECT 1 FROM recruitments WHERE student_email=? AND is_seen=0", new String[]{email});
@@ -313,6 +334,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
+    // Checks whether the organization has unseen updates.
     public boolean hasUnseenOrgUpdates(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         // Check for unseen applications on any of this org's posts
@@ -325,6 +347,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return unseen;
     }
 
+    // Marks student recruit requests as seen.
     public void markStudentRequestsSeen(String email) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -332,6 +355,7 @@ public class DBHelper extends SQLiteOpenHelper {
         db.update("recruit_requests", cv, "student_email=?", new String[]{email});
     }
 
+    // Marks student recruitment updates as seen.
     public void markStudentRecruitmentsSeen(String email) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -339,6 +363,7 @@ public class DBHelper extends SQLiteOpenHelper {
         db.update("recruitments", cv, "student_email=?", new String[]{email});
     }
 
+    // Marks organization updates as seen.
     public void markOrgUpdatesSeen(String email) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -347,8 +372,9 @@ public class DBHelper extends SQLiteOpenHelper {
         db.execSQL("UPDATE applications SET is_seen=1 WHERE post_id IN (SELECT id FROM posts WHERE org_email=?)", new String[]{email});
     }
 
-    // ── Organization methods ──────────────────────────────────────────────
+    // ── Org methods ──────────────────────────────────────────────
 
+    // Checks whether an organization account already exists.
     public boolean orgExists(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery("SELECT 1 FROM organizations WHERE email=?", new String[]{email});
@@ -357,6 +383,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
+    // Creates a new organization account.
     public boolean insertOrg(String name, String email, String password) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -366,6 +393,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.insert("organizations", null, cv) != -1;
     }
 
+    // Validates organization login credentials.
     public boolean checkOrgLogin(String email, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.query("organizations", null,
@@ -377,6 +405,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return ok;
     }
 
+    // Loads an organization profile by email.
     public Org getOrgByEmail(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.query("organizations", null, "email=?",
@@ -393,6 +422,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return null;
     }
 
+    // Loads all organization email addresses.
     public List<String> getAllOrgEmails() {
         List<String> list = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
@@ -402,11 +432,40 @@ public class DBHelper extends SQLiteOpenHelper {
         return list;
     }
 
+    // Deletes an organization account.
     public boolean deleteOrg(String email) {
         SQLiteDatabase db = this.getWritableDatabase();
-        return db.delete("organizations", "email=?", new String[]{email}) > 0;
+        db.beginTransaction();
+        try {
+            Cursor postCursor = db.rawQuery("SELECT id FROM posts WHERE org_email=?", new String[]{email});
+            List<Integer> postIds = new ArrayList<>();
+            while (postCursor.moveToNext()) {
+                postIds.add(postCursor.getInt(0));
+            }
+            postCursor.close();
+
+            for (int postId : postIds) {
+                String[] postArgs = new String[]{String.valueOf(postId)};
+                db.delete("post_tags", "post_id=?", postArgs);
+                db.delete("applications", "post_id=?", postArgs);
+                db.delete("recruitments", "post_id=?", postArgs);
+                db.delete("recruit_requests", "post_id=?", postArgs);
+                db.delete("posts", "id=?", postArgs);
+            }
+
+            db.delete("recruitments", "org_email=?", new String[]{email});
+            db.delete("recruit_requests", "org_email=?", new String[]{email});
+            boolean deleted = db.delete("organizations", "email=?", new String[]{email}) > 0;
+            if (deleted) {
+                db.setTransactionSuccessful();
+            }
+            return deleted;
+        } finally {
+            db.endTransaction();
+        }
     }
 
+    // Updates the organization profile details.
     public boolean updateOrgData(String email, String name, String description, byte[] imageBytes) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -418,6 +477,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     // ── Student methods ───────────────────────────────────────────────────
 
+    // Checks whether a student account already exists.
     public boolean studentExists(String email) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery("SELECT 1 FROM students WHERE email=?", new String[]{email});
@@ -426,6 +486,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return exists;
     }
 
+    // Creates student.
     public boolean insertStudent(String name, String email, String password,
                                  String age, String course, String phone, byte[] photo) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -440,6 +501,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.insert("students", null, cv) != -1;
     }
 
+    // Saves the selected tags for a student.
     public void saveStudentTags(String email, List<Integer> tagIds) {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete("student_tags", "student_email=?", new String[]{email});
@@ -451,6 +513,7 @@ public class DBHelper extends SQLiteOpenHelper {
         }
     }
 
+    // Loads the tag IDs selected by a student.
     public List<Integer> getStudentTagIds(String email) {
         List<Integer> ids = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
@@ -462,6 +525,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return ids;
     }
 
+    // Validates student login credentials.
     public boolean checkStudentLogin(String email, String password) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.query("students", null,
@@ -473,6 +537,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return ok;
     }
 
+    // Loads all student email addresses.
     public List<String> getAllStudentEmails() {
         List<String> list = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
@@ -482,12 +547,17 @@ public class DBHelper extends SQLiteOpenHelper {
         return list;
     }
 
+    // Deletes a student account.
     public boolean deleteStudent(String email) {
         SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("applications", "student_email=?", new String[]{email});
+        db.delete("recruitments", "student_email=?", new String[]{email});
+        db.delete("recruit_requests", "student_email=?", new String[]{email});
         db.delete("student_tags", "student_email=?", new String[]{email});
         return db.delete("students", "email=?", new String[]{email}) > 0;
     }
 
+    // Updates student.
     public boolean updateStudent(String email, String name, String age,
                                  String course, String phone, byte[] photoBytes) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -534,8 +604,9 @@ public class DBHelper extends SQLiteOpenHelper {
         return null;
     }
 
-    // ── Post methods ──────────────────────────────────────────────────────
+    // ── StuPost methods ──────────────────────────────────────────────────────
 
+    // Creates internship post.
     public long insertPost(String title, String description, String stipend, String timePeriod,
                            String orgName, String orgEmail, List<Integer> tagIds) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -576,9 +647,9 @@ public class DBHelper extends SQLiteOpenHelper {
      * Single JOIN query — fetches all posts + org image in one cursor.
      * Tags distributed via SparseArray in a second single query.
      */
-    public List<Post> getAllPostsWithImages() {
+    public List<StuPost> getAllPostsWithImages() {
         SQLiteDatabase db = this.getReadableDatabase();
-        List<Post> posts = new ArrayList<>();
+        List<StuPost> posts = new ArrayList<>();
 
         Cursor pc = db.rawQuery(
                 "SELECT p.id, p.title, p.description, p.stipend, p.time_period, " +
@@ -589,7 +660,7 @@ public class DBHelper extends SQLiteOpenHelper {
                         "ORDER BY p.id DESC", null);
 
         while (pc.moveToNext()) {
-            Post post = new Post();
+            StuPost post = new StuPost();
             post.id          = pc.getInt(0);
             post.title       = pc.getString(1);
             post.description = pc.getString(2);
@@ -605,14 +676,14 @@ public class DBHelper extends SQLiteOpenHelper {
 
         if (posts.isEmpty()) return posts;
 
-        android.util.SparseArray<Post> postMap = new android.util.SparseArray<>();
-        for (Post p : posts) postMap.put(p.id, p);
+        android.util.SparseArray<StuPost> postMap = new android.util.SparseArray<>();
+        for (StuPost p : posts) postMap.put(p.id, p);
 
         Cursor tc = db.rawQuery(
                 "SELECT pt.post_id, t.id, t.label, t.color " +
                         "FROM post_tags pt JOIN tags t ON t.id = pt.tag_id", null);
         while (tc.moveToNext()) {
-            Post p = postMap.get(tc.getInt(0));
+            StuPost p = postMap.get(tc.getInt(0));
             if (p != null) {
                 Tag tag = new Tag();
                 tag.id    = tc.getInt(1);
@@ -626,9 +697,9 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     /** Fetches a single post by ID regardless of completion status */
-    public Post getPostById(int postId) {
+    public StuPost getPostById(int postId) {
         SQLiteDatabase db = this.getReadableDatabase();
-        Post post = null;
+        StuPost post = null;
 
         Cursor pc = db.rawQuery(
                 "SELECT p.id, p.title, p.description, p.stipend, p.time_period, " +
@@ -639,7 +710,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 new String[]{String.valueOf(postId)});
 
         if (pc.moveToFirst()) {
-            post = new Post();
+            post = new StuPost();
             post.id          = pc.getInt(0);
             post.title       = pc.getString(1);
             post.description = pc.getString(2);
@@ -670,6 +741,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return post;
     }
 
+    // Loads posts for the selected organization.
     public List<OrgPost> getPostsForOrg(String orgEmail, boolean activeOnly) {
         SQLiteDatabase db = this.getReadableDatabase();
         List<OrgPost> list = new ArrayList<>();
@@ -683,7 +755,11 @@ public class DBHelper extends SQLiteOpenHelper {
         String activeClause = activeOnly ? " AND (is_completed IS NULL OR is_completed = 0) " : "";
         String query = "SELECT id, title, description, stipend, time_period, " +
                 "(SELECT COUNT(*) FROM applications WHERE post_id = posts.id), " +
-                "(SELECT COUNT(*) FROM recruitments WHERE post_id = posts.id), " +
+                "(SELECT COUNT(*) FROM (" +
+                "SELECT student_email FROM recruitments WHERE post_id = posts.id " +
+                "UNION " +
+                "SELECT student_email FROM recruit_requests WHERE post_id = posts.id AND status='Accepted'" +
+                ")), " +
                 "is_completed " +
                 "FROM posts " +
                 "WHERE LOWER(TRIM(org_email)) = ? " + activeClause +
@@ -732,6 +808,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
         return list;
     }
+    // Counts all internship posts.
     public int getGlobalPostCount() {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery("SELECT COUNT(*) FROM posts", null);
@@ -741,6 +818,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return count;
     }
 
+    // Updates an internship post.
     public boolean updatePost(int postId, String title, String description, String stipend, String timePeriod, List<Integer> tagIds) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -764,6 +842,27 @@ public class DBHelper extends SQLiteOpenHelper {
         return false;
     }
 
+    // Deletes a post and clears any related rows tied to it.
+    public boolean deletePost(int postId) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.beginTransaction();
+        try {
+            String[] args = new String[]{String.valueOf(postId)};
+            db.delete("post_tags", "post_id=?", args);
+            db.delete("applications", "post_id=?", args);
+            db.delete("recruitments", "post_id=?", args);
+            db.delete("recruit_requests", "post_id=?", args);
+            boolean deleted = db.delete("posts", "id=?", args) > 0;
+            if (deleted) {
+                db.setTransactionSuccessful();
+            }
+            return deleted;
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    // Marks an internship post as completed.
     public boolean markPostCompleted(int postId) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -771,6 +870,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.update("posts", cv, "id=?", new String[]{String.valueOf(postId)}) > 0;
     }
 
+    // Checks whether an internship post is completed.
     public boolean isPostCompleted(int postId) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery("SELECT is_completed FROM posts WHERE id=?", new String[]{String.valueOf(postId)});
@@ -808,7 +908,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     /**
      * Returns all (postId, orgEmail) pairs where the student was recruited.
-     * Used by StudentAppliedActivity to show "Accepted" state.
+     * Used by StuAppliedActivity to show "Accepted" state.
      */
     public List<RecruitmentEntry> getRecruitmentsForStudent(String studentEmail) {
         List<RecruitmentEntry> list = new ArrayList<>();
@@ -858,6 +958,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return list;
     }
 
+    // Saves a certificate for a recruited student.
     public boolean updateRecruitmentCertificate(int postId, String studentEmail, byte[] certificateBytes) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -947,11 +1048,13 @@ public class DBHelper extends SQLiteOpenHelper {
                 "id=?", new String[]{String.valueOf(requestId)}) > 0;
 
         if (updated && "Accepted".equals(status)) {
+    // Sends a recruit request to a student.
             recruitStudent(postId, studentEmail, orgEmail);
         }
         return updated;
     }
 
+    // Checks whether a recruit request already exists.
     public boolean hasRecruitRequest(int postId, String studentEmail) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery(
@@ -1035,6 +1138,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return ranked;
     }
 
+    // Calculates the weighted tag overlap score.
     private double computeTFWeightedJaccard(List<Tag> studentTags,
                                             android.util.SparseIntArray tagFreq) {
         if (tagFreq.size() == 0 || studentTags == null || studentTags.isEmpty()) return 0.0;
@@ -1066,6 +1170,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return Math.min(1.0, weightedIntersection / weightedUnion);
     }
 
+    // Loads a recruitment certificate.
     public byte[] getRecruitmentCertificate(int postId, String studentEmail) {
         SQLiteDatabase db = this.getReadableDatabase();
         Cursor c = db.rawQuery(
@@ -1092,7 +1197,8 @@ public class DBHelper extends SQLiteOpenHelper {
         return applied;
     }
 
-    public boolean applyToPost(int postId, String studentEmail) {
+    // Saves a student signup for an internship post.
+    public boolean applyToStuPost(int postId, String studentEmail) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
         cv.put("post_id", postId);
@@ -1102,16 +1208,16 @@ public class DBHelper extends SQLiteOpenHelper {
     }
 
     /** Removes an application. */
-    public boolean unapplyFromPost(int postId, String studentEmail) {
+    public boolean unapplyFromStuPost(int postId, String studentEmail) {
         SQLiteDatabase db = this.getWritableDatabase();
         return db.delete("applications", "post_id=? AND student_email=?",
                 new String[]{String.valueOf(postId), studentEmail}) > 0;
     }
 
     /** Returns all posts the student has applied to, with tags + org image */
-    public List<Post> getAppliedPosts(String studentEmail) {
+    public List<StuPost> getAppliedStuPosts(String studentEmail) {
         SQLiteDatabase db = this.getReadableDatabase();
-        List<Post> posts = new ArrayList<>();
+        List<StuPost> posts = new ArrayList<>();
 
         // Union: self-applied posts + recruit-request accepted posts
         // Both must be active (not completed)
@@ -1130,7 +1236,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 new String[]{studentEmail, studentEmail});
 
         while (pc.moveToNext()) {
-            Post post = new Post();
+            StuPost post = new StuPost();
             post.id          = pc.getInt(0);
             post.title       = pc.getString(1);
             post.description = pc.getString(2);
@@ -1146,8 +1252,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
         if (posts.isEmpty()) return posts;
 
-        android.util.SparseArray<Post> postMap = new android.util.SparseArray<>();
-        for (Post p : posts) postMap.put(p.id, p);
+        android.util.SparseArray<StuPost> postMap = new android.util.SparseArray<>();
+        for (StuPost p : posts) postMap.put(p.id, p);
 
         Cursor tc = db.rawQuery(
                 "SELECT pt.post_id, t.id, t.label, t.color " +
@@ -1161,7 +1267,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 new String[]{studentEmail, studentEmail});
 
         while (tc.moveToNext()) {
-            Post p = postMap.get(tc.getInt(0));
+            StuPost p = postMap.get(tc.getInt(0));
             if (p != null) {
                 Tag tag = new Tag();
                 tag.id    = tc.getInt(1);
@@ -1175,9 +1281,10 @@ public class DBHelper extends SQLiteOpenHelper {
         return posts;
     }
 
-    public List<Post> getStudentHistoryPosts(String studentEmail) {
+    // Loads internship history for a student.
+    public List<StuPost> getStudentHistoryStuPosts(String studentEmail) {
         SQLiteDatabase db = this.getReadableDatabase();
-        List<Post> posts = new ArrayList<>();
+        List<StuPost> posts = new ArrayList<>();
 
         Cursor pc = db.rawQuery(
                 "SELECT p.id, p.title, p.description, p.stipend, p.time_period, " +
@@ -1190,7 +1297,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 new String[]{studentEmail});
 
         while (pc.moveToNext()) {
-            Post post = new Post();
+            StuPost post = new StuPost();
             post.id          = pc.getInt(0);
             post.title       = pc.getString(1);
             post.description = pc.getString(2);
@@ -1206,8 +1313,8 @@ public class DBHelper extends SQLiteOpenHelper {
 
         if (posts.isEmpty()) return posts;
 
-        android.util.SparseArray<Post> postMap = new android.util.SparseArray<>();
-        for (Post p : posts) postMap.put(p.id, p);
+        android.util.SparseArray<StuPost> postMap = new android.util.SparseArray<>();
+        for (StuPost p : posts) postMap.put(p.id, p);
 
         Cursor tc = db.rawQuery(
                 "SELECT pt.post_id, t.id, t.label, t.color " +
@@ -1217,7 +1324,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 new String[]{studentEmail});
 
         while (tc.moveToNext()) {
-            Post p = postMap.get(tc.getInt(0));
+            StuPost p = postMap.get(tc.getInt(0));
             if (p != null) {
                 Tag tag = new Tag();
                 tag.id    = tc.getInt(1);
@@ -1233,6 +1340,7 @@ public class DBHelper extends SQLiteOpenHelper {
 
     // ── Tag methods ───────────────────────────────────────────────────────
 
+    // Loads all available tags.
     public List<Tag> getAllTags() {
         List<Tag> list = new ArrayList<>();
         SQLiteDatabase db = this.getReadableDatabase();
@@ -1248,6 +1356,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return list;
     }
 
+    // Creates a new tag.
     public boolean saveTag(String label, String color) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -1257,6 +1366,7 @@ public class DBHelper extends SQLiteOpenHelper {
                 SQLiteDatabase.CONFLICT_REPLACE) != -1;
     }
 
+    // Updates an existing tag.
     public boolean updateTag(int id, String label, String color) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues cv = new ContentValues();
@@ -1265,6 +1375,7 @@ public class DBHelper extends SQLiteOpenHelper {
         return db.update("tags", cv, "id=?", new String[]{String.valueOf(id)}) > 0;
     }
 
+    // Deletes a tag.
     public boolean deleteTag(int id) {
         SQLiteDatabase db = this.getWritableDatabase();
         return db.delete("tags", "id=?", new String[]{String.valueOf(id)}) > 0;
@@ -1283,6 +1394,7 @@ public class DBHelper extends SQLiteOpenHelper {
         public String label;
         public String color;
 
+        // Compares two tag objects.
         @Override
         public boolean equals(Object o) {
             if (this == o) return true;

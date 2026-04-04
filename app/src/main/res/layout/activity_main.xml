@@ -19,7 +19,7 @@
 
     <!-- Sign in as Organization -->
     <Button
-        android:id="@+id/btnOrganization"
+        android:id="@+id/btnOrg"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Sign in as Organization"

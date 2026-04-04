@@ -180,7 +180,7 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <Button
-                android:id="@+id/btnPost"
+                android:id="@+id/btnStuPost"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:text="Post Internship"
@@ -227,7 +227,7 @@
 
         <!-- Post (Active) -->
         <LinearLayout
-            android:id="@+id/bottomPostBtn"
+            android:id="@+id/bottomStuPostBtn"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"

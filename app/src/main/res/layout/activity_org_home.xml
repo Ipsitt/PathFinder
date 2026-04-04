@@ -95,7 +95,7 @@
                         android:id="@+id/etOrgName"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:hint="Organization Name"
+                        android:hint="Org Name"
                         android:textSize="18sp"
                         android:layout_marginTop="8dp"
                         android:gravity="center"
@@ -120,6 +120,15 @@
                         android:text="Update"
                         android:layout_marginTop="12dp"
                         android:backgroundTint="@color/status_success"
+                        android:textColor="@color/white"/>
+
+                    <Button
+                        android:id="@+id/btnDeleteOrgAccount"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:backgroundTint="@color/status_error"
+                        android:text="Delete Account"
                         android:textColor="@color/white"/>
 
                 </LinearLayout>
@@ -225,7 +234,7 @@
         </LinearLayout>
 
         <LinearLayout
-            android:id="@+id/bottomPostBtn"
+            android:id="@+id/bottomStuPostBtn"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"

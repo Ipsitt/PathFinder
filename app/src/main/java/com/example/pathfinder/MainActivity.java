@@ -7,10 +7,13 @@ import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+// Landing screen for choosing student, organization, or admin login.
+
 public class MainActivity extends AppCompatActivity {
 
-    Button btnOrganization, btnStudent;
+    Button btnOrg, btnStudent;
 
+    // Initializes the landing screen and restores the saved session.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -25,9 +28,9 @@ public class MainActivity extends AppCompatActivity {
             if (type.equals("admin")) {
                 intent = new Intent(this, AdminActivity.class);
             } else if (type.equals("org")) {
-                intent = new Intent(this, OrganizationHomeActivity.class);
+                intent = new Intent(this, OrgHomeActivity.class);
             } else {
-                intent = new Intent(this, StudentHomeActivity.class);
+                intent = new Intent(this, StuHomeActivity.class);
             }
             intent.putExtra("email", email);
             startActivity(intent);
@@ -38,23 +41,25 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // Find buttons
-        btnOrganization = findViewById(R.id.btnOrganization);
+        btnOrg = findViewById(R.id.btnOrg);
         btnStudent = findViewById(R.id.btnStudent);
 
-        // Organization button click
-        btnOrganization.setOnClickListener(new View.OnClickListener() {
+        // Org button click
+        btnOrg.setOnClickListener(new View.OnClickListener() {
+    // Opens the organization login screen.
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, OrganizationLoginActivity.class);
+                Intent intent = new Intent(MainActivity.this, OrgLoginActivity.class);
                 startActivity(intent);
             }
         });
 
         // Student button click (this was missing)
         btnStudent.setOnClickListener(new View.OnClickListener() {
+    // Opens the student login screen.
             @Override
             public void onClick(View v) {
-                Intent intent = new Intent(MainActivity.this, StudentLoginActivity.class);
+                Intent intent = new Intent(MainActivity.this, StuLoginActivity.class);
                 startActivity(intent);
             }
         });

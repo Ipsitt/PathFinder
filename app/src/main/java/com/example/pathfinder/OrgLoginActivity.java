@@ -9,17 +9,20 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-public class OrganizationLoginActivity extends AppCompatActivity {
+// Login screen for organizations.
+
+public class OrgLoginActivity extends AppCompatActivity {
 
     EditText etOrgEmail, etOrgPassword;
     Button btnOrgLogin;
     TextView tvOrgRegister;
     DBHelper dbHelper;
 
+    // Initializes the organization login screen.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_organization_login);
+        setContentView(R.layout.activity_org_login);
 
         etOrgEmail = findViewById(R.id.etOrgEmail);
         etOrgPassword = findViewById(R.id.etOrgPassword);
@@ -55,7 +58,7 @@ public class OrganizationLoginActivity extends AppCompatActivity {
                         .putString("logged_in_email", email)
                         .putString("user_type", "org")
                         .apply();
-                Intent intent = new Intent(this, OrganizationHomeActivity.class);
+                Intent intent = new Intent(this, OrgHomeActivity.class);
                 intent.putExtra("email", email);
                 startActivity(intent);
                 finish();
@@ -65,6 +68,6 @@ public class OrganizationLoginActivity extends AppCompatActivity {
         });
 
         tvOrgRegister.setOnClickListener(v ->
-                startActivity(new Intent(this, OrganizationRegisterActivity.class)));
+                startActivity(new Intent(this, OrgRegisterActivity.class)));
     }
 }

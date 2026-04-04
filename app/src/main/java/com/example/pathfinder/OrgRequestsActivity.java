@@ -27,7 +27,12 @@ import androidx.core.view.WindowInsetsControllerCompat;
 
 import com.google.android.flexbox.FlexboxLayout;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
+// Applicant requests screen for organizations.
 
 public class OrgRequestsActivity extends AppCompatActivity {
 
@@ -36,7 +41,10 @@ public class OrgRequestsActivity extends AppCompatActivity {
     LinearLayout requestsContainer;
     LinearLayout requestsTopBar;
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
+    private final ExecutorService dbExecutor = Executors.newSingleThreadExecutor();
+    private volatile boolean isLoadingRequests = false;
 
+    // Initializes the organization requests screen.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -78,16 +86,17 @@ public class OrgRequestsActivity extends AppCompatActivity {
         loadRequests();
     }
 
+    // Sets up the organization bottom navigation.
     private void initBottomNav() {
         findViewById(R.id.bottomHomeBtn).setOnClickListener(v -> {
-            Intent intent = new Intent(this, OrganizationHomeActivity.class);
+            Intent intent = new Intent(this, OrgHomeActivity.class);
             intent.putExtra("email", orgEmail);
             intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
             startActivity(intent);
         });
 
-        findViewById(R.id.bottomPostBtn).setOnClickListener(v -> {
-            Intent intent = new Intent(this, PostActivity.class);
+        findViewById(R.id.bottomStuPostBtn).setOnClickListener(v -> {
+            Intent intent = new Intent(this, OrgPostActivity.class);
             intent.putExtra("email", orgEmail);
             startActivity(intent);
         });
@@ -95,7 +104,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
         findViewById(R.id.bottomInternsBtn).setOnClickListener(v -> loadRequests());
 
         findViewById(R.id.bottomHistoryBtn).setOnClickListener(v -> {
-            Intent intent = new Intent(this, OrganizationHistoryActivity.class);
+            Intent intent = new Intent(this, OrgHistoryActivity.class);
             intent.putExtra("email", orgEmail);
             startActivity(intent);
         });
@@ -106,27 +115,78 @@ public class OrgRequestsActivity extends AppCompatActivity {
         }
     }
 
+    // Loads applicants for the organization posts without blocking the UI.
     private void loadRequests() {
-        requestsContainer.removeAllViews();
-        List<DBHelper.OrgPost> posts = dbHelper.getPostsForOrg(orgEmail, true);
-
-        if (posts.isEmpty()) {
-            TextView empty = new TextView(this);
-            empty.setText("No posts found for:\n" + orgEmail);
-            empty.setTextColor(getColor(R.color.text_secondary));
-            empty.setTextSize(16f);
-            empty.setGravity(Gravity.CENTER);
-            empty.setPadding(dp(20), dp(100), dp(20), 0);
-            requestsContainer.addView(empty);
+        if (isLoadingRequests) {
             return;
         }
 
-        for (DBHelper.OrgPost post : posts) {
-            requestsContainer.addView(buildPostCard(post));
-        }
+        isLoadingRequests = true;
+        requestsContainer.removeAllViews();
+
+        TextView loading = new TextView(this);
+        loading.setText("Loading requests...");
+        loading.setTextColor(getColor(R.color.text_secondary));
+        loading.setTextSize(16f);
+        loading.setGravity(Gravity.CENTER);
+        loading.setPadding(dp(20), dp(60), dp(20), 0);
+        requestsContainer.addView(loading);
+
+        dbExecutor.execute(() -> {
+            List<RequestSection> sections = buildRequestSections();
+            mainHandler.post(() -> {
+                if (isFinishing() || isDestroyed()) {
+                    return;
+                }
+
+                requestsContainer.removeAllViews();
+                if (sections.isEmpty()) {
+                    TextView empty = new TextView(this);
+                    empty.setText("No posts found for:\n" + orgEmail);
+                    empty.setTextColor(getColor(R.color.text_secondary));
+                    empty.setTextSize(16f);
+                    empty.setGravity(Gravity.CENTER);
+                    empty.setPadding(dp(20), dp(100), dp(20), 0);
+                    requestsContainer.addView(empty);
+                } else {
+                    for (RequestSection section : sections) {
+                        requestsContainer.addView(buildPostCard(section));
+                    }
+                }
+                isLoadingRequests = false;
+            });
+        });
     }
 
-    private View buildPostCard(DBHelper.OrgPost post) {
+    // Collects request data for each organization post.
+    private List<RequestSection> buildRequestSections() {
+        List<RequestSection> sections = new ArrayList<>();
+        List<DBHelper.OrgPost> posts = dbHelper.getPostsForOrg(orgEmail, true);
+
+        for (DBHelper.OrgPost post : posts) {
+            RequestSection section = new RequestSection();
+            section.post = post;
+
+            if (post.applicantCount > 0) {
+                List<String> applicants = dbHelper.getApplicantEmails(post.postId);
+                for (String email : applicants) {
+                    ApplicantRow row = new ApplicantRow();
+                    row.email = email;
+                    row.profile = dbHelper.getStudentProfile(email);
+                    section.applicants.add(row);
+                }
+            }
+
+            sections.add(section);
+        }
+
+        return sections;
+    }
+
+    // Builds a card for one post and its applicants.
+    private View buildPostCard(RequestSection section) {
+        DBHelper.OrgPost post = section.post;
+
         CardView card = new CardView(this);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(-1, -2);
         params.setMargins(dp(16), 0, dp(16), dp(12));
@@ -163,18 +223,15 @@ public class OrgRequestsActivity extends AppCompatActivity {
         count.setLayoutParams(countParams);
         inner.addView(count);
 
-        if (post.applicantCount > 0) {
-            List<String> applicants = dbHelper.getApplicantEmails(post.postId);
-            for (String email : applicants) {
-                DBHelper.StudentProfile profile = dbHelper.getStudentProfile(email);
-                inner.addView(buildStudentRow(profile, email, post.postId));
-            }
+        for (ApplicantRow applicant : section.applicants) {
+            inner.addView(buildStudentRow(applicant.profile, applicant.email, post.postId, post.title));
         }
 
         return card;
     }
 
-    private View buildStudentRow(DBHelper.StudentProfile profile, String studentEmail, int postId) {
+    // Builds a row for one student applicant.
+    private View buildStudentRow(DBHelper.StudentProfile profile, String studentEmail, int postId, String postTitle) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.VERTICAL);
         row.setPadding(0, dp(6), 0, dp(6));
@@ -233,7 +290,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
         btnProfile.setTextColor(Color.WHITE);
         btnProfile.setBackgroundTintList(
                 android.content.res.ColorStateList.valueOf(getColor(R.color.primary_bg)));
-        btnProfile.setOnClickListener(v -> showStudentProfile(profile, studentEmail, postId));
+        btnProfile.setOnClickListener(v -> showStudentProfile(profile, studentEmail, postId, postTitle));
         header.addView(btnProfile);
 
         View divider = new View(this);
@@ -246,7 +303,8 @@ public class OrgRequestsActivity extends AppCompatActivity {
         return row;
     }
 
-    private void showStudentProfile(DBHelper.StudentProfile profile, String studentEmail, int postId) {
+    // Shows the selected applicant profile.
+    private void showStudentProfile(DBHelper.StudentProfile profile, String studentEmail, int postId, String postTitle) {
         if (profile == null) {
             Toast.makeText(this, "Profile not available", Toast.LENGTH_SHORT).show();
             return;
@@ -254,7 +312,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
 
         Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dialog_student_profile);
+        dialog.setContentView(R.layout.dialog_stu_profile);
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
             dialog.getWindow().setLayout(
@@ -329,20 +387,9 @@ public class OrgRequestsActivity extends AppCompatActivity {
                     android.content.res.ColorStateList.valueOf(getColor(R.color.text_secondary)));
             btnRecruit.setEnabled(false);
         } else {
-            String postTitle = "";
-            List<DBHelper.OrgPost> posts = dbHelper.getPostsForOrg(orgEmail, true);
-            for (DBHelper.OrgPost post : posts) {
-                if (post.postId == postId) {
-                    postTitle = post.title;
-                    break;
-                }
-            }
-
-            final String finalPostTitle = postTitle;
-
             btnRecruit.setOnClickListener(v -> {
                 boolean sent = dbHelper.sendRecruitRequest(
-                        postId, studentEmail, orgEmail, orgName, finalPostTitle);
+                        postId, studentEmail, orgEmail, orgName, postTitle);
 
                 if (sent) {
                     boolean wasAutoAccepted = dbHelper.isRecruited(postId, studentEmail);
@@ -360,7 +407,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
                     if (wasAutoAccepted) {
                         mainHandler.postDelayed(
                                 () -> showContactStudentDialog(
-                                        profile.name, studentEmail, orgName, finalPostTitle),
+                                        profile.name, studentEmail, orgName, postTitle),
                                 3000);
                     }
                 } else {
@@ -374,6 +421,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    // Shows contact student dialog.
     private void showContactStudentDialog(String studentName, String studentEmail,
                                           String orgName, String internshipTitle) {
         String safeStudentName = (studentName == null || studentName.trim().isEmpty())
@@ -391,6 +439,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
                 .show();
     }
 
+    // Opens Gmail with a prefilled offer letter.
     private void openGmailForOfferLetter(String studentEmail, String studentName,
                                          String orgName, String internshipTitle) {
         String safeStudentName = (studentName == null || studentName.trim().isEmpty())
@@ -425,6 +474,7 @@ public class OrgRequestsActivity extends AppCompatActivity {
         }
     }
 
+    // Shows the organization menu.
     private void showPopupMenu(View view) {
         android.widget.PopupMenu popup = new android.widget.PopupMenu(this, view);
         popup.getMenu().add("Logout");
@@ -441,7 +491,27 @@ public class OrgRequestsActivity extends AppCompatActivity {
         popup.show();
     }
 
+    // Converts dp units to pixels.
     private int dp(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
+    }
+
+    // Releases the background loader when the screen closes.
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        dbExecutor.shutdownNow();
+    }
+
+    // Holds applicant data for a single post row.
+    private static class ApplicantRow {
+        String email;
+        DBHelper.StudentProfile profile;
+    }
+
+    // Holds a post and its loaded applicants for the requests screen.
+    private static class RequestSection {
+        DBHelper.OrgPost post;
+        List<ApplicantRow> applicants = new ArrayList<>();
     }
 }

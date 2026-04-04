@@ -36,12 +36,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OrganizationHomeActivity extends AppCompatActivity {
+// Home screen for organizations.
+
+public class OrgHomeActivity extends AppCompatActivity {
 
     ImageView imgOrg;
     EditText etOrgName, etOrgDescription, etStudentSearch;
-    Button btnUpdate;
-    LinearLayout bottomHomeBtn, bottomPostBtn, bottomInternsBtn, bottomHistoryBtn;
+    Button btnUpdate, btnDeleteOrgAccount;
+    LinearLayout bottomHomeBtn, bottomStuPostBtn, bottomInternsBtn, bottomHistoryBtn;
     LinearLayout studentCardsContainer;
 
     DBHelper dbHelper;
@@ -73,19 +75,21 @@ public class OrganizationHomeActivity extends AppCompatActivity {
                         }
                     });
 
+    // Initializes the organization home screen.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_organization_home);
+        setContentView(R.layout.activity_org_home);
 
         imgOrg               = findViewById(R.id.imgOrg);
         etOrgName            = findViewById(R.id.etOrgName);
         etOrgDescription     = findViewById(R.id.etOrgDescription);
         btnUpdate            = findViewById(R.id.btnUpdate);
+        btnDeleteOrgAccount  = findViewById(R.id.btnDeleteOrgAccount);
         etStudentSearch      = findViewById(R.id.etStudentSearch);
         studentCardsContainer = findViewById(R.id.studentCardsContainer);
         bottomHomeBtn        = findViewById(R.id.bottomHomeBtn);
-        bottomPostBtn        = findViewById(R.id.bottomPostBtn);
+        bottomStuPostBtn        = findViewById(R.id.bottomStuPostBtn);
         bottomInternsBtn     = findViewById(R.id.bottomInternsBtn);
         bottomHistoryBtn     = findViewById(R.id.bottomHistoryBtn);
 
@@ -149,10 +153,15 @@ public class OrganizationHomeActivity extends AppCompatActivity {
             }
         });
 
+        btnDeleteOrgAccount.setOnClickListener(v -> showDeleteAccountConfirmation());
+
         // Search with tiered scoring
         etStudentSearch.addTextChangedListener(new TextWatcher() {
+            // No action before the search text changes.
             @Override public void beforeTextChanged(CharSequence s, int i, int c, int a) {}
+            // No action while the search text is changing.
             @Override public void onTextChanged(CharSequence s, int i, int b, int c) {}
+            // Filters students as the search text changes.
             @Override
             public void afterTextChanged(Editable s) {
                 String q = s.toString().trim();
@@ -166,8 +175,8 @@ public class OrganizationHomeActivity extends AppCompatActivity {
 
         bottomHomeBtn.setOnClickListener(v ->
                 Toast.makeText(this, "You are already here", Toast.LENGTH_SHORT).show());
-        bottomPostBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(this, PostActivity.class);
+        bottomStuPostBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(this, OrgPostActivity.class);
             intent.putExtra("email", orgEmail);
             startActivity(intent);
         });
@@ -177,7 +186,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
             startActivity(intent);
         });
         bottomHistoryBtn.setOnClickListener(v -> {
-            Intent intent = new Intent(this, OrganizationHistoryActivity.class);
+            Intent intent = new Intent(this, OrgHistoryActivity.class);
             intent.putExtra("email", orgEmail);
             startActivity(intent);
         });
@@ -185,6 +194,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         loadStudentList();
     }
 
+    // Refreshes students and notification badges.
     @Override
     protected void onResume() {
         super.onResume();
@@ -192,6 +202,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         checkNotifications();
     }
 
+    // Updates the organization notification dot.
     private void checkNotifications() {
         View dot = findViewById(R.id.dotOrgRequests);
         if (dot != null) {
@@ -203,6 +214,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         }
     }
 
+    // Loads the organization profile details.
     private void loadOrgData() {
         DBHelper.Org org = dbHelper.getOrgByEmail(orgEmail);
         if (org != null) {
@@ -215,6 +227,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         }
     }
 
+    // Loads the ranked student list.
     private void loadStudentList() {
         allRankedStudents = dbHelper.getRankedStudentsForOrg(orgEmail);
         String q = etStudentSearch.getText().toString().trim();
@@ -286,6 +299,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         }
     }
 
+    // Builds a ranked student card.
     private View buildStudentCard(DBHelper.RankedStudent rs) {
         DBHelper.StudentProfile profile = rs.profile;
 
@@ -429,18 +443,20 @@ public class OrganizationHomeActivity extends AppCompatActivity {
                 android.content.res.ColorStateList.valueOf(
                         Color.parseColor("#1E3A8A")));
         btnRecruit.setOnClickListener(v ->
-                showRecruitPostPicker(profile));
+    // Lets the organization choose a post for the recruit request.
+                showRecruitStuPostPicker(profile));
         inner.addView(btnRecruit);
 
         return card;
     }
 
+    // Shows the selected student profile.
     private void showStudentProfileDialog(DBHelper.StudentProfile profile) {
         if (profile == null) return;
 
         Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dialog_student_profile);
+        dialog.setContentView(R.layout.dialog_stu_profile);
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
             dialog.getWindow().setLayout(
@@ -501,8 +517,8 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    // ── Post picker dialog ────────────────────────────────────────────────
-    private void showRecruitPostPicker(DBHelper.StudentProfile profile) {
+    // ── StuPost picker dialog ────────────────────────────────────────────────
+    private void showRecruitStuPostPicker(DBHelper.StudentProfile profile) {
         List<DBHelper.OrgPost> activePosts =
                 dbHelper.getPostsForOrg(orgEmail, true);
 
@@ -527,7 +543,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         tvTitle.setText("Recruit " + profile.name + " for…");
 
         LinearLayout postsContainer =
-                dialog.findViewById(R.id.dialogPostsContainer);
+                dialog.findViewById(R.id.dialogStuPostsContainer);
         postsContainer.removeAllViews();
 
         DBHelper.Org org = dbHelper.getOrgByEmail(orgEmail);
@@ -552,12 +568,12 @@ public class OrganizationHomeActivity extends AppCompatActivity {
             rowBg.setCornerRadius(dp(8));
             row.setBackground(rowBg);
 
-            TextView tvPost = new TextView(this);
-            tvPost.setText(op.title);
-            tvPost.setTextSize(14f);
-            tvPost.setTextColor(getColor(R.color.text_primary));
-            tvPost.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
-            row.addView(tvPost);
+            TextView tvStuPost = new TextView(this);
+            tvStuPost.setText(op.title);
+            tvStuPost.setTextSize(14f);
+            tvStuPost.setTextColor(getColor(R.color.text_primary));
+            tvStuPost.setLayoutParams(new LinearLayout.LayoutParams(0, -2, 1f));
+            row.addView(tvStuPost);
 
             Button btnSend = new Button(this);
             LinearLayout.LayoutParams sendLp =
@@ -618,6 +634,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    // Decodes an image from the selected URI.
     private Bitmap decodeBitmap(Uri uri) throws IOException {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             ImageDecoder.Source source =
@@ -632,6 +649,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         }
     }
 
+    // Resizes an organization image before saving.
     private Bitmap scaleBitmap(Bitmap bitmap, int maxSize) {
         int w = bitmap.getWidth(), h = bitmap.getHeight();
         if (w <= maxSize && h <= maxSize) return bitmap;
@@ -640,6 +658,7 @@ public class OrganizationHomeActivity extends AppCompatActivity {
                 Math.round(w * scale), Math.round(h * scale), true);
     }
 
+    // Shows the organization menu.
     private void showPopupMenu(View view) {
         android.widget.PopupMenu popup = new android.widget.PopupMenu(this, view);
         popup.getMenu().add("Logout");
@@ -656,6 +675,34 @@ public class OrganizationHomeActivity extends AppCompatActivity {
         popup.show();
     }
 
+    // Shows a confirmation dialog before deleting the organization account.
+    private void showDeleteAccountConfirmation() {
+        new AlertDialog.Builder(this)
+                .setTitle("Delete account?")
+                .setMessage("Are you sure you want to delete this organization account? This action cannot be undone.")
+                .setPositiveButton("Delete", (dialog, which) -> deleteOrganizationAccount())
+                .setNegativeButton("Cancel", null)
+                .show();
+    }
+
+    // Deletes the organization account and clears the current session.
+    private void deleteOrganizationAccount() {
+        boolean deleted = dbHelper.deleteOrg(orgEmail);
+        if (!deleted) {
+            Toast.makeText(this, "Could not delete account. Please try again.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit().clear().apply();
+        Toast.makeText(this, "Organization account deleted.", Toast.LENGTH_SHORT).show();
+        Intent intent = new Intent(this, MainActivity.class);
+        intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TASK);
+        startActivity(intent);
+        finish();
+    }
+
+    // Converts dp units to pixels.
+    // Converts dp units to pixels.
     private int dp(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }

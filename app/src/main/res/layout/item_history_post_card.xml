@@ -8,12 +8,12 @@
     android:layout_marginEnd="12dp"
     android:layout_marginTop="6dp"
     android:layout_marginBottom="6dp"
-    app:cardCornerRadius="12dp"
-    app:cardElevation="3dp"
-    app:cardBackgroundColor="@color/surface_card"
     android:foreground="?attr/selectableItemBackground"
     android:clickable="true"
-    android:focusable="true">
+    android:focusable="true"
+    app:cardBackgroundColor="@color/surface_card"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="3dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -21,134 +21,149 @@
         android:orientation="vertical"
         android:padding="14dp">
 
-        <TextView
-            android:id="@+id/tvHistoryPostTitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textSize="16sp"
-            android:textStyle="bold"
-            android:textColor="@color/text_primary"
-            android:maxLines="2"
-            android:ellipsize="end"
-            android:layout_marginBottom="10dp"/>
-
-        <!-- Divider -->
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@color/surface_alt"
-            android:layout_marginBottom="10dp"/>
-
-        <!-- Stipend + Duration pills -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:layout_marginBottom="10dp">
+            android:layout_marginBottom="10dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/tvHistoryPostTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:ellipsize="end"
+                android:maxLines="2"
+                android:textColor="@color/text_primary"
+                android:textSize="16sp"
+                android:textStyle="bold" />
+
+            <ImageButton
+                android:id="@+id/btnDeletePost"
+                android:layout_width="36dp"
+                android:layout_height="36dp"
+                android:layout_marginStart="10dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="Delete post"
+                android:padding="6dp"
+                android:src="@android:drawable/ic_menu_delete"
+                android:tint="@color/status_error" />
+        </LinearLayout>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="10dp"
+            android:background="@color/surface_alt" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="10dp"
+            android:orientation="horizontal">
 
             <TextView
                 android:id="@+id/tvStipend"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="@color/status_success"
+                android:layout_marginEnd="8dp"
                 android:background="@drawable/pill_green"
                 android:paddingStart="10dp"
-                android:paddingEnd="10dp"
                 android:paddingTop="4dp"
+                android:paddingEnd="10dp"
                 android:paddingBottom="4dp"
-                android:layout_marginEnd="8dp"/>
+                android:textColor="@color/status_success"
+                android:textSize="12sp" />
 
             <TextView
                 android:id="@+id/tvDuration"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:textSize="12sp"
-                android:textColor="@color/secondary_bg"
                 android:background="@drawable/pill_blue"
                 android:paddingStart="10dp"
-                android:paddingEnd="10dp"
                 android:paddingTop="4dp"
-                android:paddingBottom="4dp"/>
+                android:paddingEnd="10dp"
+                android:paddingBottom="4dp"
+                android:textColor="@color/secondary_bg"
+                android:textSize="12sp" />
         </LinearLayout>
 
-        <!-- Description -->
         <TextView
             android:id="@+id/tvDescription"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textSize="13sp"
-            android:textColor="@color/text_secondary"
+            android:layout_marginBottom="12dp"
             android:ellipsize="end"
             android:lineSpacingMultiplier="1.3"
-            android:layout_marginBottom="12dp"/>
+            android:textColor="@color/text_secondary"
+            android:textSize="13sp" />
 
-        <!-- Tags -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
+            android:layout_marginBottom="12dp"
             android:gravity="center_vertical"
-            android:layout_marginBottom="12dp">
+            android:orientation="horizontal">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
                 android:text="Tags: "
-                android:textSize="12sp"
-                android:textStyle="bold"
                 android:textColor="@color/text_secondary"
-                android:layout_marginEnd="4dp"/>
+                android:textSize="12sp"
+                android:textStyle="bold" />
 
             <HorizontalScrollView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:scrollbars="none">
+
                 <LinearLayout
                     android:id="@+id/tagChipsContainer"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"/>
+                    android:orientation="horizontal" />
             </HorizontalScrollView>
         </LinearLayout>
 
-        <!-- Total Interns -->
         <TextView
             android:id="@+id/tvTotalInterns"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:textSize="14sp"
+            android:layout_marginBottom="12dp"
             android:textColor="@color/secondary_accent"
-            android:textStyle="bold"
-            android:layout_marginBottom="12dp"/>
+            android:textSize="14sp"
+            android:textStyle="bold" />
 
-        <!-- Action Buttons -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical">
+
             <Button
                 android:id="@+id/btnEditPost"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
-                android:text="✏️ Edit Post"
-                android:textSize="13sp"
+                android:layout_marginBottom="8dp"
                 android:backgroundTint="@color/surface_alt"
+                android:text="Edit Post"
                 android:textColor="@color/text_secondary"
+                android:textSize="13sp"
                 app:strokeColor="@color/divider"
-                app:strokeWidth="1dp"
-                android:layout_marginBottom="8dp"/>
+                app:strokeWidth="1dp" />
 
             <Button
                 android:id="@+id/btnMarkComplete"
                 android:layout_width="match_parent"
                 android:layout_height="44dp"
+                android:backgroundTint="@color/status_error"
                 android:text="Mark as Completed"
-                android:textSize="13sp"
                 android:textColor="@color/white"
-                android:backgroundTint="@color/status_error"/>
+                android:textSize="13sp" />
         </LinearLayout>
     </LinearLayout>
 </androidx.cardview.widget.CardView>

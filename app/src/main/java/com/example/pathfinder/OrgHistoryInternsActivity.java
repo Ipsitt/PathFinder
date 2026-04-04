@@ -35,6 +35,8 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.util.List;
 
+// Intern list screen for a completed organization post.
+
 public class OrgHistoryInternsActivity extends AppCompatActivity {
 
     DBHelper dbHelper;
@@ -78,6 +80,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
                         }
                     });
 
+    // Initializes the intern list screen.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -123,6 +126,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         loadInterns();
     }
 
+    // Loads interns for the selected post.
     private void loadInterns() {
         internsContainer.removeAllViews();
         List<String> recruitedEmails = dbHelper.getRecruitedStudentsForPost(postId);
@@ -187,6 +191,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         internsContainer.addView(listCard);
     }
 
+    // Builds a row for one recruited student.
     private View buildStudentRow(DBHelper.StudentProfile profile, String studentEmail) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.VERTICAL);
@@ -284,6 +289,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         return row;
     }
     
+    // Handles certificate upload and preview actions.
     private void handleCertificateClick(String studentEmail) {
         boolean completed = dbHelper.isPostCompleted(postId);
         byte[] certBytes = dbHelper.getRecruitmentCertificate(postId, studentEmail);
@@ -293,6 +299,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
                 Toast.makeText(this, "Post is completed. Cannot upload new certificate.", Toast.LENGTH_SHORT).show();
             } else {
                 pendingUploadStudentEmail = studentEmail;
+    // Opens the image picker for certificates.
                 launchImagePicker();
             }
         } else {
@@ -300,6 +307,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         }
     }
 
+    // Opens the image picker for certificates.
     private void launchImagePicker() {
         Intent intent = new Intent(Intent.ACTION_PICK,
                 MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
@@ -307,6 +315,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         certificatePickerLauncher.launch(intent);
     }
     
+    // Shows the certificate preview dialog.
     private void showCertificateDialog(String studentEmail, byte[] certBytes, boolean isCompleted) {
         Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
@@ -333,12 +342,14 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         btnReupload.setOnClickListener(v -> {
             dialog.dismiss();
             pendingUploadStudentEmail = studentEmail;
+    // Opens the image picker for certificates.
             launchImagePicker();
         });
         
         dialog.show();
     }
 
+    // Shows the selected student profile.
     private void showStudentProfile(DBHelper.StudentProfile profile) {
         if (profile == null) {
             Toast.makeText(this, "Profile not available", Toast.LENGTH_SHORT).show();
@@ -347,7 +358,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
 
         Dialog dialog = new Dialog(this);
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        dialog.setContentView(R.layout.dialog_student_profile);
+        dialog.setContentView(R.layout.dialog_stu_profile);
         if (dialog.getWindow() != null) {
             dialog.getWindow().setBackgroundDrawableResource(android.R.color.transparent);
             dialog.getWindow().setLayout(
@@ -414,6 +425,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         dialog.show();
     }
     
+    // Decodes an image from the selected URI.
     private Bitmap decodeBitmap(Uri uri) throws IOException {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             ImageDecoder.Source source = ImageDecoder.createSource(getContentResolver(), uri);
@@ -425,6 +437,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         }
     }
 
+    // Resizes a certificate image before saving.
     private Bitmap scaleBitmap(Bitmap bitmap, int maxSize) {
         int w = bitmap.getWidth(), h = bitmap.getHeight();
         if (w <= maxSize && h <= maxSize) return bitmap;
@@ -432,6 +445,7 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         return Bitmap.createScaledBitmap(bitmap, Math.round(w * scale), Math.round(h * scale), true);
     }
 
+    // Shows the organization menu.
     private void showPopupMenu(View view) {
         android.widget.PopupMenu popup = new android.widget.PopupMenu(this, view);
         popup.getMenu().add("Logout");
@@ -448,5 +462,6 @@ public class OrgHistoryInternsActivity extends AppCompatActivity {
         popup.show();
     }
 
+    // Converts dp units to pixels.
     private int dp(int dp) { return Math.round(dp * getResources().getDisplayMetrics().density); }
 }

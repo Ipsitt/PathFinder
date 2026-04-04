@@ -19,11 +19,14 @@ import androidx.fragment.app.Fragment;
 
 import java.util.List;
 
+// Organizations tab for the admin dashboard.
+
 public class AdminOrgsFragment extends Fragment {
 
     LinearLayout orgsTableBody;
     DBHelper dbHelper;
 
+    // Inflates the organizations tab layout.
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -32,6 +35,7 @@ public class AdminOrgsFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_admin_orgs, container, false);
     }
 
+    // Initializes the organizations tab.
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -40,6 +44,7 @@ public class AdminOrgsFragment extends Fragment {
         loadOrgs();
     }
 
+    // Loads registered organizations into the table.
     private void loadOrgs() {
         orgsTableBody.removeAllViews();
         List<String> emails = dbHelper.getAllOrgEmails();
@@ -67,6 +72,7 @@ public class AdminOrgsFragment extends Fragment {
         }
     }
 
+    // Builds a table row for one organization.
     private LinearLayout buildRow(String email, int index) {
         LinearLayout row = new LinearLayout(getContext());
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -100,7 +106,7 @@ public class AdminOrgsFragment extends Fragment {
                 android.content.res.ColorStateList.valueOf(requireContext().getColor(R.color.status_success)));
         btnLogin.setTextColor(Color.WHITE);
         btnLogin.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), OrganizationHomeActivity.class);
+            Intent intent = new Intent(getActivity(), OrgHomeActivity.class);
             intent.putExtra("email", email);
             startActivity(intent);
         });
@@ -124,14 +130,15 @@ public class AdminOrgsFragment extends Fragment {
         return row;
     }
 
+    // Confirms deletion of the selected organization.
     private void confirmDelete(String email) {
         new AlertDialog.Builder(requireContext())
-                .setTitle("Delete Organization")
+                .setTitle("Delete Org")
                 .setMessage("Delete \"" + email + "\"? This cannot be undone.")
                 .setPositiveButton("Delete", (dialog, which) -> {
                     boolean deleted = dbHelper.deleteOrg(email);
                     if (deleted) {
-                        Toast.makeText(getContext(), "Organization deleted", Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getContext(), "Org deleted", Toast.LENGTH_SHORT).show();
                         loadOrgs();
                     } else {
                         Toast.makeText(getContext(), "Delete failed", Toast.LENGTH_SHORT).show();

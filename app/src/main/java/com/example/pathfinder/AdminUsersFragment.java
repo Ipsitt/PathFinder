@@ -19,11 +19,14 @@ import androidx.fragment.app.Fragment;
 
 import java.util.List;
 
+// Student accounts tab for the admin dashboard.
+
 public class AdminUsersFragment extends Fragment {
 
     LinearLayout usersTableBody;
     DBHelper dbHelper;
 
+    // Inflates the student accounts tab layout.
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -32,6 +35,7 @@ public class AdminUsersFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_admin_users, container, false);
     }
 
+    // Initializes the student accounts tab.
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -40,6 +44,7 @@ public class AdminUsersFragment extends Fragment {
         loadUsers();
     }
 
+    // Loads registered students into the table.
     private void loadUsers() {
         usersTableBody.removeAllViews();
         List<String> emails = dbHelper.getAllStudentEmails();
@@ -66,6 +71,7 @@ public class AdminUsersFragment extends Fragment {
         }
     }
 
+    // Builds a table row for one student.
     private LinearLayout buildRow(String email, int index) {
         LinearLayout row = new LinearLayout(getContext());
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -86,7 +92,7 @@ public class AdminUsersFragment extends Fragment {
         tvEmail.setMaxLines(2);
         row.addView(tvEmail);
 
-        // Login button — opens StudentHomeActivity as this user
+        // Login button — opens StuHomeActivity as this user
         Button btnLogin = new Button(getContext());
         LinearLayout.LayoutParams loginParams = new LinearLayout.LayoutParams(
                 0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
@@ -99,7 +105,7 @@ public class AdminUsersFragment extends Fragment {
                 android.content.res.ColorStateList.valueOf(requireContext().getColor(R.color.primary_accent)));
         btnLogin.setTextColor(Color.WHITE);
         btnLogin.setOnClickListener(v -> {
-            Intent intent = new Intent(getActivity(), StudentHomeActivity.class);
+            Intent intent = new Intent(getActivity(), StuHomeActivity.class);
             intent.putExtra("email", email);
             startActivity(intent);
         });
@@ -123,6 +129,7 @@ public class AdminUsersFragment extends Fragment {
         return row;
     }
 
+    // Confirms deletion of the selected student.
     private void confirmDelete(String email) {
         new AlertDialog.Builder(requireContext())
                 .setTitle("Delete User")

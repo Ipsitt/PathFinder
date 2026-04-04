@@ -20,14 +20,17 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class StudentHistoryAdapter extends RecyclerView.Adapter<StudentHistoryAdapter.ViewHolder> {
+// Adapter for internship history cards on the student history screen.
+
+public class StuHistoryAdapter extends RecyclerView.Adapter<StuHistoryAdapter.ViewHolder> {
 
     public interface DownloadListener {
+        // Handles certificate downloads.
         void onDownload(Bitmap bitmap, String postTitle);
     }
 
     private final Context context;
-    private final List<Post> posts;
+    private final List<StuPost> posts;
     private final String studentEmail;
     private final DownloadListener downloadListener;
     private final DBHelper dbHelper;
@@ -35,7 +38,8 @@ public class StudentHistoryAdapter extends RecyclerView.Adapter<StudentHistoryAd
     private final ExecutorService executor = Executors.newFixedThreadPool(2);
     private final Handler handler = new Handler(Looper.getMainLooper());
 
-    public StudentHistoryAdapter(Context context, List<Post> posts, String studentEmail, DownloadListener downloadListener) {
+    // Creates the adapter for student history cards.
+    public StuHistoryAdapter(Context context, List<StuPost> posts, String studentEmail, DownloadListener downloadListener) {
         this.context = context;
         this.posts = posts;
         this.studentEmail = studentEmail;
@@ -43,16 +47,18 @@ public class StudentHistoryAdapter extends RecyclerView.Adapter<StudentHistoryAd
         this.dbHelper = new DBHelper(context);
     }
 
+    // Inflates a history card.
     @NonNull
     @Override
     public ViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View v = LayoutInflater.from(context).inflate(R.layout.item_student_history_card, parent, false);
+        View v = LayoutInflater.from(context).inflate(R.layout.item_stu_history_card, parent, false);
         return new ViewHolder(v);
     }
 
+    // Binds internship history data to a card.
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        Post post = posts.get(position);
+        StuPost post = posts.get(position);
 
         holder.tvPostTitle.setText(post.title != null ? post.title : "");
         holder.tvOrgName.setText(post.orgName != null ? post.orgName : "");
@@ -106,6 +112,7 @@ public class StudentHistoryAdapter extends RecyclerView.Adapter<StudentHistoryAd
         });
     }
 
+    // Returns the number of history items.
     @Override
     public int getItemCount() {
         return posts == null ? 0 : posts.size();
@@ -116,6 +123,7 @@ public class StudentHistoryAdapter extends RecyclerView.Adapter<StudentHistoryAd
         TextView tvPostTitle, tvOrgName, tvOrgEmail, tvStipend, tvDuration, tvDescription;
         Button btnDownload;
 
+        // Caches views for a history card.
         ViewHolder(@NonNull View itemView) {
             super(itemView);
             imgOrgPhoto    = itemView.findViewById(R.id.imgOrgPhoto);

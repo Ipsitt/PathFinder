@@ -13,6 +13,8 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
+// Reusable color picker view for choosing tag colors.
+
 /**
  * Discord-style color picker:
  *   - Large square: X = saturation (left→right), Y = brightness (top→bottom, bright→dark)
@@ -24,6 +26,7 @@ import android.view.View;
 public class ColorPickerView extends View {
 
     public interface OnColorChangedListener {
+        // Receives color change updates from the picker.
         void onColorChanged(int color);
     }
 
@@ -53,16 +56,20 @@ public class ColorPickerView extends View {
 
     private OnColorChangedListener listener;
 
+    // Creates the color picker view.
     public ColorPickerView(Context context) {
         super(context); init(context);
     }
+    // Creates the color picker view.
     public ColorPickerView(Context context, AttributeSet attrs) {
         super(context, attrs); init(context);
     }
+    // Creates the color picker view.
     public ColorPickerView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle); init(context);
     }
 
+    // Sets up the color picker paints and defaults.
     private void init(Context context) {
         density = context.getResources().getDisplayMetrics().density;
 
@@ -79,6 +86,7 @@ public class ColorPickerView extends View {
         setLayerType(LAYER_TYPE_SOFTWARE, null); // needed for shadow
     }
 
+    // Rebuilds the gradients after the view size changes.
     @Override
     protected void onSizeChanged(int w, int h, int oldW, int oldH) {
         super.onSizeChanged(w, h, oldW, oldH);
@@ -93,6 +101,7 @@ public class ColorPickerView extends View {
         buildSquareShader();
     }
 
+    // Builds the hue gradient.
     private void buildHueShader() {
         int[] hueColors = new int[361];
         for (int i = 0; i <= 360; i++) {
@@ -103,6 +112,7 @@ public class ColorPickerView extends View {
                 hueColors, null, Shader.TileMode.CLAMP));
     }
 
+    // Builds the saturation and brightness gradient.
     private void buildSquareShader() {
         if (squareRect.width() == 0) return;
 
@@ -120,6 +130,7 @@ public class ColorPickerView extends View {
         squarePaint.setShader(new ComposeShader(briShader, satShader, PorterDuff.Mode.MULTIPLY));
     }
 
+    // Draws the color picker controls.
     @Override
     protected void onDraw(Canvas canvas) {
         if (squareRect.width() == 0) return;
@@ -158,6 +169,7 @@ public class ColorPickerView extends View {
                 tickW, tickW, tickFill);
     }
 
+    // Updates the selected color from touch input.
     @Override
     public boolean onTouchEvent(MotionEvent event) {
         float x = event.getX();
@@ -168,6 +180,7 @@ public class ColorPickerView extends View {
                     (x - squareRect.left) / squareRect.width()));
             brightness = Math.max(0f, Math.min(1f,
                     1f - (y - squareRect.top) / squareRect.height()));
+    // Notifies listeners and redraws the picker.
             notifyAndInvalidate();
             return true;
         }
@@ -183,29 +196,35 @@ public class ColorPickerView extends View {
         return super.onTouchEvent(event);
     }
 
+    // Checks whether the touch is inside the target area.
     private boolean isTouchInOrNear(RectF rect, float x, float y) {
         float slack = 24f * density;
         return x >= rect.left  - slack && x <= rect.right  + slack
                 && y >= rect.top   - slack && y <= rect.bottom + slack;
     }
 
+    // Notifies listeners and redraws the picker.
     private void notifyAndInvalidate() {
         invalidate();
         if (listener != null) listener.onColorChanged(getCurrentColor());
     }
 
+    // Calculates the currently selected color.
     private int getCurrentColor() {
         return Color.HSVToColor(new float[]{hue, saturation, brightness});
     }
 
+    // Returns the selected color.
     public int getSelectedColor() {
         return getCurrentColor();
     }
 
+    // Returns the selected color as a hex string.
     public String getSelectedColorHex() {
         return String.format("#%06X", 0xFFFFFF & getCurrentColor());
     }
 
+    // Registers a color change listener.
     public void setOnColorChangedListener(OnColorChangedListener l) {
         this.listener = l;
     }

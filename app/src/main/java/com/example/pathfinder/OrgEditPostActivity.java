@@ -1,6 +1,7 @@
 package com.example.pathfinder;
 
 import android.graphics.Color;
+import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.AdapterView;
@@ -19,17 +20,22 @@ import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
+import com.google.android.flexbox.FlexboxLayout;
+
 import java.util.ArrayList;
 import java.util.List;
 
-public class EditPostActivity extends AppCompatActivity {
+// Edit internship post screen for organizations.
+
+public class OrgEditPostActivity extends AppCompatActivity {
 
     EditText etTitle, etDescription, etStipend, etTimePeriod;
     Spinner spTagDropdown;
     TextView tvSelectedTags;
-    Button btnUpdatePost;
+    FlexboxLayout tagChipsContainer;
+    Button btnUpdateStuPost;
     ImageView btnEditBack;
-    LinearLayout editPostTopBar;
+    LinearLayout editStuPostTopBar;
 
     DBHelper dbHelper;
     List<DBHelper.Tag> allTags;
@@ -37,6 +43,7 @@ public class EditPostActivity extends AppCompatActivity {
     
     int postId;
 
+    // Initializes the internship post editor.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -45,7 +52,7 @@ public class EditPostActivity extends AppCompatActivity {
         new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView())
                 .setAppearanceLightStatusBars(false);
                 
-        setContentView(R.layout.activity_edit_post);
+        setContentView(R.layout.activity_org_edit_post);
 
         dbHelper = new DBHelper(this);
 
@@ -55,11 +62,12 @@ public class EditPostActivity extends AppCompatActivity {
         etTimePeriod = findViewById(R.id.etEditTimePeriod);
         spTagDropdown = findViewById(R.id.spEditTagDropdown);
         tvSelectedTags = findViewById(R.id.tvEditSelectedTags);
-        btnUpdatePost = findViewById(R.id.btnUpdatePost);
+        tagChipsContainer = findViewById(R.id.editTagChipsContainer);
+        btnUpdateStuPost = findViewById(R.id.btnUpdateStuPost);
         btnEditBack = findViewById(R.id.btnEditBack);
-        editPostTopBar = findViewById(R.id.editPostTopBar);
+        editStuPostTopBar = findViewById(R.id.editStuPostTopBar);
 
-        ViewCompat.setOnApplyWindowInsetsListener(editPostTopBar, (v, insets) -> {
+        ViewCompat.setOnApplyWindowInsetsListener(editStuPostTopBar, (v, insets) -> {
             int sb = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
             v.setPadding(v.getPaddingLeft(), sb + dp(16), v.getPaddingRight(), v.getPaddingBottom());
             return insets;
@@ -81,7 +89,7 @@ public class EditPostActivity extends AppCompatActivity {
         
         loadTagsIntoSpinner();
 
-        List<Integer> existingTagIds = getExistingTagsForPost(postId);
+        List<Integer> existingTagIds = getExistingTagsForStuPost(postId);
         for(Integer id : existingTagIds) {
             for(DBHelper.Tag t : allTags) {
                 if(t.id == id) {
@@ -90,32 +98,35 @@ public class EditPostActivity extends AppCompatActivity {
                 }
             }
         }
-        updateSelectedTagsText();
+        renderTagChips();
 
         spTagDropdown.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+    // Adds the selected tag to the post.
             @Override
             public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
                 if (position == 0) return;
                 DBHelper.Tag tag = allTags.get(position - 1);
                 if (selectedTags.contains(tag)) {
-                    Toast.makeText(EditPostActivity.this, "Tag already added", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(OrgEditPostActivity.this, "Tag already added", Toast.LENGTH_SHORT).show();
                 } else {
                     if (selectedTags.size() >= 5) {
                         selectedTags.remove(0);
                     }
                     selectedTags.add(tag);
-                    updateSelectedTagsText();
+                    renderTagChips();
                 }
                 spTagDropdown.setSelection(0);
             }
+            // Keeps the current tag selection unchanged.
             @Override
             public void onNothingSelected(AdapterView<?> parent) {}
         });
 
-        btnUpdatePost.setOnClickListener(v -> updatePost());
+        btnUpdateStuPost.setOnClickListener(v -> updatePost());
     }
     
-    private List<Integer> getExistingTagsForPost(int id) {
+    // Loads the tags already assigned to the post.
+    private List<Integer> getExistingTagsForStuPost(int id) {
         List<Integer> ids = new ArrayList<>();
         android.database.sqlite.SQLiteDatabase db = dbHelper.getReadableDatabase();
         android.database.Cursor c = db.rawQuery("SELECT tag_id FROM post_tags WHERE post_id=?", new String[]{String.valueOf(id)});
@@ -126,6 +137,7 @@ public class EditPostActivity extends AppCompatActivity {
         return ids;
     }
 
+    // Loads available tags into the dropdown.
     private void loadTagsIntoSpinner() {
         allTags = dbHelper.getAllTags();
         List<String> labels = new ArrayList<>();
@@ -138,19 +150,68 @@ public class EditPostActivity extends AppCompatActivity {
         spTagDropdown.setAdapter(adapter);
     }
 
-    private void updateSelectedTagsText() {
+    // Shows selected tags as removable chips.
+    private void renderTagChips() {
+        tagChipsContainer.removeAllViews();
+
         if (selectedTags.isEmpty()) {
-            tvSelectedTags.setText("Selected Tags: None");
+            tvSelectedTags.setVisibility(View.VISIBLE);
+            tvSelectedTags.setText("No tags selected");
             return;
         }
-        StringBuilder sb = new StringBuilder("Selected Tags: ");
-        for (int i = 0; i < selectedTags.size(); i++) {
-            sb.append(selectedTags.get(i).label);
-            if (i < selectedTags.size() - 1) sb.append(", ");
+
+        tvSelectedTags.setVisibility(View.GONE);
+
+        for (DBHelper.Tag tag : new ArrayList<>(selectedTags)) {
+            LinearLayout chip = new LinearLayout(this);
+            FlexboxLayout.LayoutParams chipLp = new FlexboxLayout.LayoutParams(
+                    FlexboxLayout.LayoutParams.WRAP_CONTENT,
+                    FlexboxLayout.LayoutParams.WRAP_CONTENT);
+            chipLp.setMargins(0, 0, dp(8), dp(8));
+            chip.setLayoutParams(chipLp);
+            chip.setOrientation(LinearLayout.HORIZONTAL);
+            chip.setGravity(android.view.Gravity.CENTER_VERTICAL);
+            chip.setPadding(dp(10), dp(6), dp(6), dp(6));
+
+            int tagColor;
+            try { tagColor = Color.parseColor(tag.color); }
+            catch (Exception e) { tagColor = Color.parseColor("#1E90FF"); }
+
+            GradientDrawable chipBg = new GradientDrawable();
+            chipBg.setShape(GradientDrawable.RECTANGLE);
+            chipBg.setCornerRadius(dp(20));
+            chipBg.setColor(tagColor);
+            chip.setBackground(chipBg);
+
+            double lum = (0.299 * Color.red(tagColor)
+                    + 0.587 * Color.green(tagColor)
+                    + 0.114 * Color.blue(tagColor)) / 255;
+            int textColor = lum < 0.55 ? Color.WHITE : Color.parseColor("#1E293B");
+
+            TextView tvLabel = new TextView(this);
+            tvLabel.setText(tag.label);
+            tvLabel.setTextSize(13f);
+            tvLabel.setTextColor(textColor);
+            chip.addView(tvLabel);
+
+            TextView tvRemove = new TextView(this);
+            tvRemove.setText("  x");
+            tvRemove.setTextSize(13f);
+            tvRemove.setTextColor(textColor);
+            tvRemove.setPadding(0, 0, dp(4), 0);
+            tvRemove.setClickable(true);
+            tvRemove.setFocusable(true);
+            tvRemove.setOnClickListener(v -> {
+                selectedTags.remove(tag);
+                renderTagChips();
+            });
+            chip.addView(tvRemove);
+
+            tagChipsContainer.addView(chip);
         }
-        tvSelectedTags.setText(sb.toString());
     }
 
+    // Saves the edited internship post.
     private void updatePost() {
         String title = etTitle.getText().toString().trim();
         String desc = etDescription.getText().toString().trim();
@@ -174,6 +235,7 @@ public class EditPostActivity extends AppCompatActivity {
         }
     }
 
+    // Converts dp units to pixels.
     private int dp(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }

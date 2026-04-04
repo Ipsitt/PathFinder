@@ -27,21 +27,24 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder> {
+// Adapter for student internship post cards.
+
+public class StuPostAdapter extends RecyclerView.Adapter<StuPostAdapter.StuPostViewHolder> {
 
     public interface OnPostClickListener {
-        void onPostClick(Post post);
+        // Handles a tap on a post card.
+        void onPostClick(StuPost post);
     }
 
     private final Context context;
-    private List<Post> posts;
+    private List<StuPost> posts;
     private final OnPostClickListener listener;
     private final String studentEmail;
     private final DBHelper dbHelper;
 
     /**
-     * When true the adapter is being used inside StudentAppliedActivity.
-     * In this mode clicking the card still opens PostDetailActivity (read-only),
+     * When true the adapter is being used inside StuAppliedActivity.
+     * In this mode clicking the card still opens StuPostDetailActivity (read-only),
      * and each card shows the "Accepted" button if the student was recruited.
      */
     private final boolean appliedMode;
@@ -52,12 +55,14 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
     private final ExecutorService imageExecutor = Executors.newFixedThreadPool(2);
     private final Handler mainHandler = new Handler(Looper.getMainLooper());
 
-    public PostAdapter(Context context, List<Post> posts,
+    // Creates the adapter for student internship posts.
+    public StuPostAdapter(Context context, List<StuPost> posts,
                        String studentEmail, OnPostClickListener listener) {
         this(context, posts, studentEmail, listener, false, null);
     }
 
-    public PostAdapter(Context context, List<Post> posts,
+    // Creates the adapter for student internship posts.
+    public StuPostAdapter(Context context, List<StuPost> posts,
                        String studentEmail, OnPostClickListener listener,
                        boolean appliedMode,
                        List<DBHelper.RecruitmentEntry> recruitments) {
@@ -75,21 +80,24 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         }
     }
 
-    public void updatePosts(List<Post> newPosts) {
-        this.posts = newPosts;
+    // Replaces the current post list.
+    public void updatePosts(List<StuPost> newStuPosts) {
+        this.posts = newStuPosts;
         notifyDataSetChanged();
     }
 
+    // Inflates a student internship post card.
     @NonNull
     @Override
-    public PostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(context).inflate(R.layout.item_post_card, parent, false);
-        return new PostViewHolder(view);
+    public StuPostViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
+        View view = LayoutInflater.from(context).inflate(R.layout.item_stu_post_card, parent, false);
+        return new StuPostViewHolder(view);
     }
 
+    // Binds internship post data to a card.
     @Override
-    public void onBindViewHolder(@NonNull PostViewHolder holder, int position) {
-        Post post = posts.get(position);
+    public void onBindViewHolder(@NonNull StuPostViewHolder holder, int position) {
+        StuPost post = posts.get(position);
 
         holder.tvTitle.setText(post.title != null ? post.title : "");
         holder.tvOrgName.setText(post.orgName != null ? post.orgName : "");
@@ -127,12 +135,12 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         }
 
         if (appliedMode && holder.btnAccepted != null) {
-            String orgEmailForPost = recruitmentMap.get(post.id);
-            if (orgEmailForPost != null) {
+            String orgEmailForStuPost = recruitmentMap.get(post.id);
+            if (orgEmailForStuPost != null) {
                 holder.btnAccepted.setVisibility(View.VISIBLE);
                 holder.btnAccepted.setAllCaps(false);
 
-                final String orgMail = orgEmailForPost;
+                final String orgMail = orgEmailForStuPost;
                 final String orgName = (post.orgName != null) ? post.orgName : "the recruiter";
 
                 holder.btnAccepted.setOnClickListener(v -> {
@@ -191,18 +199,20 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
                 return;
             }
 
-            Intent intent = new Intent(context, PostDetailActivity.class);
+            Intent intent = new Intent(context, StuPostDetailActivity.class);
             intent.putExtra("post_id", post.id);
             intent.putExtra("student_email", studentEmail);
             context.startActivity(intent);
         });
     }
 
+    // Returns the number of posts.
     @Override
     public int getItemCount() {
         return posts == null ? 0 : posts.size();
     }
 
+    // Builds a tag chip view.
     private View makeTagChip(DBHelper.Tag tag) {
         TextView chip = new TextView(context);
         LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(
@@ -221,6 +231,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         }
 
         chip.setTextColor(
+    // Checks whether a tag color needs light text.
                 isColorDark(bgColor) ? Color.WHITE : context.getColor(R.color.text_primary));
 
         GradientDrawable bg = new GradientDrawable();
@@ -232,6 +243,7 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         return chip;
     }
 
+    // Checks whether a tag color needs light text.
     private boolean isColorDark(int color) {
         double lum = (0.299 * Color.red(color)
                 + 0.587 * Color.green(color)
@@ -239,11 +251,12 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         return lum < 0.55;
     }
 
+    // Converts dp units to pixels.
     private int dp(int dp) {
         return Math.round(dp * context.getResources().getDisplayMetrics().density);
     }
 
-    static class PostViewHolder extends RecyclerView.ViewHolder {
+    static class StuPostViewHolder extends RecyclerView.ViewHolder {
         ImageView imgOrgPhoto;
         TextView tvTitle;
         TextView tvOrgName;
@@ -253,7 +266,8 @@ public class PostAdapter extends RecyclerView.Adapter<PostAdapter.PostViewHolder
         LinearLayout tagChipsContainer;
         Button btnAccepted;
 
-        PostViewHolder(@NonNull View itemView) {
+        // Caches views for a student internship post card.
+        StuPostViewHolder(@NonNull View itemView) {
             super(itemView);
             imgOrgPhoto = itemView.findViewById(R.id.imgOrgPhoto);
             tvTitle = itemView.findViewById(R.id.tvPostTitle);

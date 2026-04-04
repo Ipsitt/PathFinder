@@ -22,6 +22,8 @@ import androidx.fragment.app.Fragment;
 import java.util.ArrayList;
 import java.util.List;
 
+// Tags tab for the admin dashboard.
+
 public class AdminTagsFragment extends Fragment {
 
     Spinner spinnerTags;
@@ -38,6 +40,7 @@ public class AdminTagsFragment extends Fragment {
     private boolean updatingHexFromPicker = false;
     private boolean updatingPickerFromHex = false;
 
+    // Inflates the tags tab layout.
     @Nullable
     @Override
     public View onCreateView(@NonNull LayoutInflater inflater,
@@ -46,6 +49,7 @@ public class AdminTagsFragment extends Fragment {
         return inflater.inflate(R.layout.fragment_admin_tags, container, false);
     }
 
+    // Initializes the tags tab.
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
@@ -72,8 +76,11 @@ public class AdminTagsFragment extends Fragment {
 
         // Hex field → update picker + swatch when user types a valid full hex
         etColorHex.addTextChangedListener(new TextWatcher() {
+            // No action before the hex value changes.
             @Override public void beforeTextChanged(CharSequence s, int st, int c, int a) {}
+            // No action while the hex value is changing.
             @Override public void onTextChanged(CharSequence s, int st, int b, int c) {}
+            // Updates the color picker when the hex value changes.
             @Override
             public void afterTextChanged(Editable s) {
                 if (updatingHexFromPicker) return;
@@ -93,6 +100,7 @@ public class AdminTagsFragment extends Fragment {
         loadTags();
 
         spinnerTags.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            // Loads the selected tag into the editor.
             @Override
             public void onItemSelected(AdapterView<?> parent, View v, int pos, long id) {
                 if (pos == 0) {
@@ -108,6 +116,7 @@ public class AdminTagsFragment extends Fragment {
                     } catch (IllegalArgumentException ignored) {}
                 }
             }
+            // Keeps the current tag selection unchanged.
             @Override public void onNothingSelected(AdapterView<?> parent) {}
         });
 
@@ -125,6 +134,7 @@ public class AdminTagsFragment extends Fragment {
         updatingHexFromPicker = false;
     }
 
+    // Updates the tag color preview.
     private void updateSwatch(int color) {
         GradientDrawable gd = new GradientDrawable();
         gd.setShape(GradientDrawable.RECTANGLE);
@@ -134,6 +144,7 @@ public class AdminTagsFragment extends Fragment {
         colorPreview.setBackground(gd);
     }
 
+    // Loads saved tags into the dropdown.
     private void loadTags() {
         tagList = dbHelper.getAllTags();
         List<String> labels = new ArrayList<>();
@@ -147,6 +158,7 @@ public class AdminTagsFragment extends Fragment {
         spinnerTags.setAdapter(adapter);
     }
 
+    // Creates or updates the current tag.
     private void saveTag() {
         String label = etTagLabel.getText().toString().trim();
         if (label.isEmpty()) {
@@ -175,6 +187,7 @@ public class AdminTagsFragment extends Fragment {
         }
     }
 
+    // Deletes the selected tag.
     private void deleteSelectedTag() {
         if (selectedTagId == -1) {
             Toast.makeText(getContext(), "Select a tag to delete", Toast.LENGTH_SHORT).show();

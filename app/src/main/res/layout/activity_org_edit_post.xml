@@ -8,7 +8,7 @@
 
     <!-- Top Bar -->
     <LinearLayout
-        android:id="@+id/editPostTopBar"
+        android:id="@+id/editStuPostTopBar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
@@ -43,7 +43,7 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:padding="16dp"
-        app:layout_constraintTop_toBottomOf="@id/editPostTopBar"
+        app:layout_constraintTop_toBottomOf="@id/editStuPostTopBar"
         app:layout_constraintBottom_toBottomOf="parent">
 
         <LinearLayout
@@ -103,10 +103,28 @@
                 android:background="@color/surface_card"/>
 
             <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Selected Tags:"
+                android:textStyle="bold"
+                android:textColor="@color/text_primary"
+                android:paddingTop="8dp"
+                android:paddingBottom="4dp"/>
+
+            <com.google.android.flexbox.FlexboxLayout
+                android:id="@+id/editTagChipsContainer"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="4dp"
+                app:flexWrap="wrap"
+                app:alignItems="flex_start"
+                app:justifyContent="flex_start"/>
+
+            <TextView
                 android:id="@+id/tvEditSelectedTags"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Selected Tags: None"
+                android:text="No tags selected"
                 android:paddingTop="8dp"
                 android:paddingBottom="8dp"
                 android:textColor="@color/text_primary" />
@@ -147,7 +165,7 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <Button
-                android:id="@+id/btnUpdatePost"
+                android:id="@+id/btnUpdateStuPost"
                 android:layout_width="match_parent"
                 android:layout_height="56dp"
                 android:text="Update Internship"

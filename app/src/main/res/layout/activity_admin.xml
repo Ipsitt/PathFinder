@@ -54,7 +54,7 @@
                 android:textStyle="bold"/>
         </LinearLayout>
 
-        <!-- Organizations tab -->
+        <!-- Orgs tab -->
         <LinearLayout
             android:id="@+id/navOrgs"
             android:layout_width="0dp"

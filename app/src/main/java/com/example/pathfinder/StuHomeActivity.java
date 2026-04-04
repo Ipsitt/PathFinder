@@ -26,19 +26,22 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-public class StudentHomeActivity extends AppCompatActivity {
+// Home screen for students.
 
-    RecyclerView rvPosts;
+public class StuHomeActivity extends AppCompatActivity {
+
+    RecyclerView rvStuPosts;
     EditText etSearch;
     ImageView btnMenu;
     LinearLayout topBar;
-    PostAdapter adapter;
+    StuPostAdapter adapter;
     DBHelper dbHelper;
     String studentEmail;
 
-    List<Post> allPosts = new ArrayList<>();
+    List<StuPost> allStuPosts = new ArrayList<>();
     Set<Integer> studentTagIds = new HashSet<>();
 
+    // Initializes the student home screen.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,9 +50,9 @@ public class StudentHomeActivity extends AppCompatActivity {
         new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView())
                 .setAppearanceLightStatusBars(false);
 
-        setContentView(R.layout.activity_student_home);
+        setContentView(R.layout.activity_stu_home);
 
-        rvPosts      = findViewById(R.id.rvPosts);
+        rvStuPosts      = findViewById(R.id.rvStuPosts);
         etSearch     = findViewById(R.id.etSearch);
         btnMenu      = findViewById(R.id.btnMenu);
         topBar       = findViewById(R.id.topBar);
@@ -66,35 +69,40 @@ public class StudentHomeActivity extends AppCompatActivity {
             return insets;
         });
 
-        rvPosts.setLayoutManager(new LinearLayoutManager(this));
-        allPosts = dbHelper.getAllPostsWithImages();
+        rvStuPosts.setLayoutManager(new LinearLayoutManager(this));
+        allStuPosts = dbHelper.getAllPostsWithImages();
 
-        adapter = new PostAdapter(this, rankAndFilter(allPosts, null), studentEmail, null);
-        rvPosts.setAdapter(adapter);
+        adapter = new StuPostAdapter(this, rankAndFilter(allStuPosts, null), studentEmail, null);
+        rvStuPosts.setAdapter(adapter);
 
         etSearch.addTextChangedListener(new TextWatcher() {
+            // No action before the search text changes.
             @Override public void beforeTextChanged(CharSequence s, int i, int c, int a) {}
+            // No action while the search text is changing.
             @Override public void onTextChanged(CharSequence s, int i, int b, int c) {}
+            // Filters internship posts as the search text changes.
             @Override
             public void afterTextChanged(Editable s) {
                 String q = s.toString().trim();
-                adapter.updatePosts(rankAndFilter(allPosts, q.isEmpty() ? null : q));
+                adapter.updatePosts(rankAndFilter(allStuPosts, q.isEmpty() ? null : q));
             }
         });
 
         btnMenu.setOnClickListener(v -> showPopupMenu());
     }
 
+    // Refreshes posts and notification badges.
     @Override
     protected void onResume() {
         super.onResume();
-        allPosts = dbHelper.getAllPostsWithImages();
+        allStuPosts = dbHelper.getAllPostsWithImages();
         String q = etSearch.getText().toString().trim();
-        adapter.updatePosts(rankAndFilter(allPosts, q.isEmpty() ? null : q));
+        adapter.updatePosts(rankAndFilter(allStuPosts, q.isEmpty() ? null : q));
 
         checkNotifications();
     }
 
+    // Updates the student notification badge.
     private void checkNotifications() {
         View dot = findViewById(R.id.dotStudentMenu);
         if (dot != null) {
@@ -105,12 +113,12 @@ public class StudentHomeActivity extends AppCompatActivity {
     // ─────────────────────────────────────────────────────────────────────
     // SCORING: Composite Jaccard + Text Priority
     // ─────────────────────────────────────────────────────────────────────
-    private List<Post> rankAndFilter(List<Post> source, String query) {
+    private List<StuPost> rankAndFilter(List<StuPost> source, String query) {
         String q = query != null ? query.toLowerCase().trim() : null;
         boolean hasQuery = q != null && !q.isEmpty();
 
-        List<ScoredPost> scored = new ArrayList<>();
-        for (Post post : source) {
+        List<ScoredStuPost> scored = new ArrayList<>();
+        for (StuPost post : source) {
             Set<Integer> postTagSet = new HashSet<>();
             if (post.tags != null) for (DBHelper.Tag t : post.tags) postTagSet.add(t.id);
 
@@ -136,15 +144,16 @@ public class StudentHomeActivity extends AppCompatActivity {
                 else continue; // no match — exclude
             }
 
-            scored.add(new ScoredPost(post, tagScore + queryScore));
+            scored.add(new ScoredStuPost(post, tagScore + queryScore));
         }
 
         Collections.sort(scored, (a, b) -> Double.compare(b.score, a.score));
-        List<Post> result = new ArrayList<>();
-        for (ScoredPost sp : scored) result.add(sp.post);
+        List<StuPost> result = new ArrayList<>();
+        for (ScoredStuPost sp : scored) result.add(sp.post);
         return result;
     }
 
+    // Calculates tag similarity between the student and a post.
     private double jaccardSimilarity(Set<Integer> a, Set<Integer> b) {
         if (a.isEmpty() && b.isEmpty()) return 0.0;
         Set<Integer> inter = new HashSet<>(a); inter.retainAll(b);
@@ -152,8 +161,18 @@ public class StudentHomeActivity extends AppCompatActivity {
         return (double) inter.size() / union.size();
     }
 
-    private static class ScoredPost { Post post; double score; ScoredPost(Post p, double s) { post=p; score=s; } }
+    private static class ScoredStuPost {
+        StuPost post;
+        double score;
 
+        // Stores a post with its ranking score.
+        ScoredStuPost(StuPost p, double s) {
+            post = p;
+            score = s;
+        }
+    }
+
+    // Shows the student menu.
     private void showPopupMenu() {
         PopupMenu popup = new PopupMenu(this, btnMenu);
         popup.inflate(R.menu.menu_student_home);
@@ -171,7 +190,7 @@ public class StudentHomeActivity extends AppCompatActivity {
 
         popup.setOnMenuItemClickListener(item -> {
             int id = item.getItemId();
-            if (id == R.id.menu_posts)    { etSearch.setText(""); adapter.updatePosts(rankAndFilter(allPosts, null)); return true; }
+            if (id == R.id.menu_posts)    { etSearch.setText(""); adapter.updatePosts(rankAndFilter(allStuPosts, null)); return true; }
             if (id == R.id.menu_logout)   {
                 getSharedPreferences("PathFinderPrefs", MODE_PRIVATE).edit().clear().apply();
                 Intent i = new Intent(this, MainActivity.class);
@@ -180,26 +199,26 @@ public class StudentHomeActivity extends AppCompatActivity {
                 return true;
             }
             if (id == R.id.menu_profile) {
-                Intent intent = new Intent(this, StudentProfileActivity.class);
+                Intent intent = new Intent(this, StuProfileActivity.class);
                 intent.putExtra("email", studentEmail);
                 startActivity(intent);
                 return true;
             }
             if (id == R.id.menu_applied) {
-                Intent intent = new Intent(this, StudentAppliedActivity.class);
+                Intent intent = new Intent(this, StuAppliedActivity.class);
                 intent.putExtra("email", studentEmail);
                 startActivity(intent);
                 return true;
             }
             if (id == R.id.menu_requests) {
-                Intent intent = new Intent(this, StudentRequestsActivity.class);
+                Intent intent = new Intent(this, StuRequestsActivity.class);
                 intent.putExtra("email", studentEmail);
                 startActivity(intent);
                 return true;
             }
 
             if (id == R.id.menu_history) {
-                Intent intent = new Intent(this, StudentHistoryActivity.class);
+                Intent intent = new Intent(this, StuHistoryActivity.class);
                 intent.putExtra("email", studentEmail);
                 startActivity(intent);
                 return true;
@@ -209,5 +228,6 @@ public class StudentHomeActivity extends AppCompatActivity {
         popup.show();
     }
 
+    // Converts dp units to pixels.
     private int dp(int dp) { return Math.round(dp * getResources().getDisplayMetrics().density); }
 }

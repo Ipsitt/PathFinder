@@ -98,7 +98,7 @@
 
     <!-- RecyclerView sits on the light grey feed background -->
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvPosts"
+        android:id="@+id/rvStuPosts"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/surface_alt"

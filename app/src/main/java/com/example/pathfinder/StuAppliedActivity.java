@@ -17,7 +17,9 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.List;
 
-public class StudentAppliedActivity extends AppCompatActivity {
+// Applied internships screen for students.
+
+public class StuAppliedActivity extends AppCompatActivity {
 
     RecyclerView rvApplied;
     LinearLayout topBar;
@@ -26,17 +28,18 @@ public class StudentAppliedActivity extends AppCompatActivity {
     DBHelper dbHelper;
     String studentEmail;
 
+    // Initializes the applied internships screen.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        // Match the same edge-to-edge style as StudentHomeActivity
+        // Match the same edge-to-edge style as StuHomeActivity
         WindowCompat.setDecorFitsSystemWindows(getWindow(), false);
         getWindow().setStatusBarColor(Color.TRANSPARENT);
         new WindowInsetsControllerCompat(getWindow(), getWindow().getDecorView())
                 .setAppearanceLightStatusBars(false);
 
-        setContentView(R.layout.activity_student_applied);
+        setContentView(R.layout.activity_stu_applied);
 
         topBar       = findViewById(R.id.topBar);
         btnBack      = findViewById(R.id.btnBack);
@@ -50,7 +53,7 @@ public class StudentAppliedActivity extends AppCompatActivity {
             dbHelper.markStudentRecruitmentsSeen(studentEmail);
         }
 
-        // Push top bar below status bar — same pattern as StudentHomeActivity
+        // Push top bar below status bar — same pattern as StuHomeActivity
         ViewCompat.setOnApplyWindowInsetsListener(topBar, (v, insets) -> {
             int sb = insets.getInsets(WindowInsetsCompat.Type.statusBars()).top;
             v.setPadding(v.getPaddingLeft(), sb + dp(16),
@@ -61,17 +64,19 @@ public class StudentAppliedActivity extends AppCompatActivity {
         btnBack.setOnClickListener(v -> finish());
 
         rvApplied.setLayoutManager(new LinearLayoutManager(this));
-        loadAppliedPosts();
+        loadAppliedStuPosts();
     }
 
+    // Refreshes the applied internships list.
     @Override
     protected void onResume() {
         super.onResume();
-        loadAppliedPosts();
+        loadAppliedStuPosts();
     }
 
-    private void loadAppliedPosts() {
-        List<Post> applied = dbHelper.getAppliedPosts(studentEmail);
+    // Loads applied internships for the student.
+    private void loadAppliedStuPosts() {
+        List<StuPost> applied = dbHelper.getAppliedStuPosts(studentEmail);
 
         if (applied.isEmpty()) {
             rvApplied.setVisibility(View.GONE);
@@ -85,12 +90,14 @@ public class StudentAppliedActivity extends AppCompatActivity {
                     dbHelper.getRecruitmentsForStudent(studentEmail);
 
             // Applied mode: shows "Accepted" banner on recruited cards
-            PostAdapter adapter = new PostAdapter(
+            StuPostAdapter adapter = new StuPostAdapter(
                     this, applied, studentEmail, null, true, recruitments);
             rvApplied.setAdapter(adapter);
         }
     }
 
+    // Converts dp units to pixels.
+    // Converts dp units to pixels.
     private int dp(int dp) {
         return Math.round(dp * getResources().getDisplayMetrics().density);
     }

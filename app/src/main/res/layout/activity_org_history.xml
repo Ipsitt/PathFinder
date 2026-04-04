@@ -52,7 +52,7 @@
     </LinearLayout>
 
     <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/rvHistoryPosts"
+        android:id="@+id/rvHistoryStuPosts"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:clipToPadding="false"
@@ -97,7 +97,7 @@
 
         <!-- Post -->
         <LinearLayout
-            android:id="@+id/bottomPostBtn"
+            android:id="@+id/bottomStuPostBtn"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"

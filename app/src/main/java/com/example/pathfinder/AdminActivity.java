@@ -31,6 +31,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import java.util.ArrayList;
 import java.util.List;
 
+// Admin dashboard for managing tags, organizations, and student accounts.
+
 public class AdminActivity extends AppCompatActivity {
 
     DBHelper dbHelper;
@@ -43,6 +45,7 @@ public class AdminActivity extends AppCompatActivity {
     String selectedTagColor = "#3B82F6"; // Default to primary accent
     View colorPreviewBox;
 
+    // Initializes the Admin dashboard for managing tags, organizations, and student accounts.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -133,6 +136,7 @@ public class AdminActivity extends AppCompatActivity {
 
         // Bottom nav
         root.addView(buildBottomNav(), new LinearLayout.LayoutParams(
+                // Converts dp units to pixels.
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(64)));
 
         setContentView(root);
@@ -143,6 +147,7 @@ public class AdminActivity extends AppCompatActivity {
     // Tab switching
     // ─────────────────────────────────────────────────────────────────────────
 
+    // Shows tab.
     void showTab(int tab) {
         activeTab = tab;
         contentFrame.removeAllViews();
@@ -156,6 +161,7 @@ public class AdminActivity extends AppCompatActivity {
     // TAGS SCREEN
     // ─────────────────────────────────────────────────────────────────────────
 
+    // Builds tags screen.
     View buildTagsScreen() {
         ScrollView scroll = new ScrollView(this);
         LinearLayout layout = new LinearLayout(this);
@@ -179,15 +185,18 @@ public class AdminActivity extends AppCompatActivity {
         layout.addView(labelRow, params(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
+    // Adds vertical spacing to a layout.
         addGap(layout, 20);
 
         // ── Color section ─────────────────────────────────────
         layout.addView(boldLabel("Color:"));
+    // Adds vertical spacing to a layout.
         addGap(layout, 8);
 
         // Preview box
         colorPreviewBox = new View(this);
         LinearLayout.LayoutParams previewLp = new LinearLayout.LayoutParams(
+                // Converts dp units to pixels.
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(50));
         previewLp.bottomMargin = dp(12);
         setRoundedColor(colorPreviewBox, Color.parseColor(selectedTagColor));
@@ -222,6 +231,7 @@ public class AdminActivity extends AppCompatActivity {
                     ViewGroup.LayoutParams.WRAP_CONTENT));
         }
 
+    // Adds vertical spacing to a layout.
         addGap(layout, 24);
 
         // ── Save button ─────────────────────────────────────
@@ -243,10 +253,12 @@ public class AdminActivity extends AppCompatActivity {
         layout.addView(btnSave, params(ViewGroup.LayoutParams.MATCH_PARENT,
                 ViewGroup.LayoutParams.WRAP_CONTENT));
 
+    // Adds vertical spacing to a layout.
         addGap(layout, 20);
 
         // ── Existing tags with color box + Delete buttons ─────────────
         layout.addView(boldLabel("Existing Tags:"));
+    // Adds vertical spacing to a layout.
         addGap(layout, 8);
         List<DBHelper.Tag> tags = dbHelper.getAllTags();
         for (DBHelper.Tag t : tags) {
@@ -289,10 +301,12 @@ public class AdminActivity extends AppCompatActivity {
         return scroll;
     }
 
+    // Refreshes tag spinner.
     void refreshTagSpinner(Spinner spinner) {
         List<DBHelper.Tag> tags = dbHelper.getAllTags();
         List<String> labels = new ArrayList<>();
         if (tags.isEmpty()) labels.add("(no tags yet)");
+        // Handles for.
         else for (DBHelper.Tag t : tags) labels.add(t.label);
         ArrayAdapter<String> a = new ArrayAdapter<>(this,
                 android.R.layout.simple_spinner_item, labels);
@@ -304,6 +318,7 @@ public class AdminActivity extends AppCompatActivity {
     // ORGANIZATIONS SCREEN
     // ─────────────────────────────────────────────────────────────────────────
 
+    // Builds orgs screen.
     View buildOrgsScreen() {
         ScrollView scroll = new ScrollView(this);
         LinearLayout layout = new LinearLayout(this);
@@ -313,6 +328,7 @@ public class AdminActivity extends AppCompatActivity {
         TextView title = boldLabel("Organizations");
         title.setTextSize(18f);
         layout.addView(title);
+    // Adds vertical spacing to a layout.
         addGap(layout, 12);
 
         List<String> emails = dbHelper.getAllOrgEmails();
@@ -327,6 +343,7 @@ public class AdminActivity extends AppCompatActivity {
         return scroll;
     }
 
+    // Builds organization row.
     View buildOrgRow(String email) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -354,7 +371,7 @@ public class AdminActivity extends AppCompatActivity {
 
         Button btnLogin = smallButton("Login", getColor(R.color.primary_accent));
         btnLogin.setOnClickListener(v -> {
-            Intent i = new Intent(this, OrganizationHomeActivity.class);
+            Intent i = new Intent(this, OrgHomeActivity.class);
             i.putExtra("email", email);
             startActivity(i);
         });
@@ -363,7 +380,7 @@ public class AdminActivity extends AppCompatActivity {
         Button btnDel = smallButton("Delete", getColor(R.color.status_error));
         btnDel.setOnClickListener(v ->
                 new AlertDialog.Builder(this)
-                        .setTitle("Delete Organization")
+                        .setTitle("Delete Org")
                         .setMessage("Are you sure you want to delete:\n" + email)
                         .setPositiveButton("Delete", (d, w) -> {
                             dbHelper.deleteOrg(email);
@@ -381,6 +398,7 @@ public class AdminActivity extends AppCompatActivity {
     // USERS SCREEN
     // ─────────────────────────────────────────────────────────────────────────
 
+    // Builds users screen.
     View buildUsersScreen() {
         ScrollView scroll = new ScrollView(this);
         LinearLayout layout = new LinearLayout(this);
@@ -390,6 +408,7 @@ public class AdminActivity extends AppCompatActivity {
         TextView title = boldLabel("Users (Students)");
         title.setTextSize(18f);
         layout.addView(title);
+    // Adds vertical spacing to a layout.
         addGap(layout, 12);
 
         List<String> emails = dbHelper.getAllStudentEmails();
@@ -404,6 +423,7 @@ public class AdminActivity extends AppCompatActivity {
         return scroll;
     }
 
+    // Builds user row.
     View buildUserRow(String email) {
         LinearLayout row = new LinearLayout(this);
         row.setOrientation(LinearLayout.HORIZONTAL);
@@ -430,7 +450,7 @@ public class AdminActivity extends AppCompatActivity {
 
         Button btnLogin = smallButton("Login", getColor(R.color.primary_accent));
         btnLogin.setOnClickListener(v -> {
-            Intent i = new Intent(this, StudentHomeActivity.class);
+            Intent i = new Intent(this, StuHomeActivity.class);
             i.putExtra("email", email);
             startActivity(i);
         });
@@ -457,6 +477,7 @@ public class AdminActivity extends AppCompatActivity {
     // BOTTOM NAV
     // ─────────────────────────────────────────────────────────────────────────
 
+    // Builds bottom navigation.
     LinearLayout buildBottomNav() {
         LinearLayout bar = new LinearLayout(this);
         bar.setOrientation(LinearLayout.HORIZONTAL);
@@ -465,7 +486,7 @@ public class AdminActivity extends AppCompatActivity {
         bar.setElevation(dp(8));
 
         navTags  = navItem("\uD83C\uDFF7", "Tags",  () -> showTab(0));
-        navOrgs  = navItem("\uD83C\uDFE2", "Orgs",  () -> showTab(1));
+        navOrgs  = navItem("\uD83C\uDFE2", "Organizations",  () -> showTab(1));
         navUsers = navItem("\uD83D\uDC64", "Users", () -> showTab(2));
 
         LinearLayout.LayoutParams p = new LinearLayout.LayoutParams(0,
@@ -476,6 +497,7 @@ public class AdminActivity extends AppCompatActivity {
         return bar;
     }
 
+    // Builds a bottom navigation item.
     LinearLayout navItem(String emoji, String label, Runnable onClick) {
         LinearLayout item = new LinearLayout(this);
         item.setOrientation(LinearLayout.VERTICAL);
@@ -499,6 +521,7 @@ public class AdminActivity extends AppCompatActivity {
         return item;
     }
 
+    // Updates navigation highlight.
     void updateNavHighlight() {
         int active   = getColor(R.color.primary_bg);
         int inactive = getColor(R.color.text_secondary);
@@ -507,6 +530,7 @@ public class AdminActivity extends AppCompatActivity {
         tintNav(navUsers, activeTab == 2 ? active : inactive);
     }
 
+    // Applies navigation.
     void tintNav(LinearLayout nav, int color) {
         for (int i = 0; i < nav.getChildCount(); i++) {
             View v = nav.getChildAt(i);
@@ -518,6 +542,7 @@ public class AdminActivity extends AppCompatActivity {
     // Shared helpers
     // ─────────────────────────────────────────────────────────────────────────
 
+    // Builds the table header row.
     View tableHeader() {
         LinearLayout h = new LinearLayout(this);
         h.setOrientation(LinearLayout.HORIZONTAL);
@@ -538,6 +563,7 @@ public class AdminActivity extends AppCompatActivity {
         return h;
     }
 
+    // Creates an empty-state message.
     TextView emptyMessage(String msg) {
         TextView tv = new TextView(this);
         tv.setText(msg);
@@ -546,6 +572,7 @@ public class AdminActivity extends AppCompatActivity {
         return tv;
     }
 
+    // Creates a bold label.
     TextView boldLabel(String text) {
         TextView tv = new TextView(this);
         tv.setText(text);
@@ -555,6 +582,7 @@ public class AdminActivity extends AppCompatActivity {
         return tv;
     }
 
+    // Creates a styled action button.
     Button styledButton(String text, int color) {
         Button b = new Button(this);
         b.setText(text);
@@ -563,6 +591,7 @@ public class AdminActivity extends AppCompatActivity {
         return b;
     }
 
+    // Creates a compact action button.
     Button smallButton(String text, int color) {
         Button b = new Button(this);
         b.setText(text);
@@ -574,6 +603,7 @@ public class AdminActivity extends AppCompatActivity {
         return b;
     }
 
+    // Applies a rounded color background to a view.
     void setRoundedColor(View v, int color) {
         GradientDrawable gd = new GradientDrawable();
         gd.setColor(color);
@@ -582,16 +612,20 @@ public class AdminActivity extends AppCompatActivity {
         v.setBackground(gd);
     }
 
+    // Creates layout parameters.
     LinearLayout.LayoutParams params(int w, int h) {
         return new LinearLayout.LayoutParams(w, h);
     }
 
+    // Adds vertical spacing to a layout.
     void addGap(LinearLayout l, int dpVal) {
         View v = new View(this);
         l.addView(v, new LinearLayout.LayoutParams(
+                // Converts dp units to pixels.
                 ViewGroup.LayoutParams.MATCH_PARENT, dp(dpVal)));
     }
 
+    // Converts dp units to pixels.
     int dp(int val) {
         return Math.round(val * getResources().getDisplayMetrics().density);
     }
